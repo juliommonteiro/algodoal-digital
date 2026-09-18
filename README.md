@@ -2,7 +2,7 @@
 
 Plataforma PWA offline-first para turismo, economia local e preservação ambiental em Algodoal, Ilha de Maiandeua (PA).
 
-Mapa da ilha · diretório de negócios locais · conexão com carroceiros · missões ambientais · passaporte digital — funcionando mesmo com internet instável.
+Mapa da ilha · diretório de negócios locais · conexão com carroceiros · missões ambientais · passaporte digital funcionando mesmo com internet instável.
 
 **Equipe:** James Cook Junior · Julio Monteiro · Leonardo Moreira
 **MVP:** dezembro de 2026
