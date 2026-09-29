@@ -41,6 +41,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Os testes sempre usam o mock, mesmo que o .env local de quem roda aponte para a API
+    // real (VITE_USAR_MOCK=false): sem isso, a suíte depende de um backend no ar.
+    env: { VITE_USAR_MOCK: 'true' },
     setupFiles: ['./src/test/setup.ts'],
     css: false,
   },
