@@ -73,7 +73,7 @@ class Place(UUIDPkMixin, TimestampMixin, Base):
 
     category: Mapped[Category] = relationship(back_populates="places")
     photos: Mapped[list[PlacePhoto]] = relationship(
-        back_populates="place", cascade="all, delete-orphan"
+        back_populates="place", cascade="all, delete-orphan", order_by="PlacePhoto.position"
     )
     business: Mapped[Business | None] = relationship(
         back_populates="place", cascade="all, delete-orphan"

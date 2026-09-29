@@ -7,6 +7,7 @@ from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.db.session import get_db
 from app.main import app
 
 RODAR_TESTES_DE_BANCO = bool(os.getenv("RUN_DB_TESTS"))
@@ -45,3 +46,15 @@ def db(engine: Engine) -> Generator[Session, None, None]:
         sessao.close()
         transacao.rollback()
         conexao.close()
+
+
+@pytest.fixture
+def api(db: Session) -> Generator[TestClient, None, None]:
+    """Cliente HTTP cujas rotas usam a sessão `db` do teste: veem o que o teste criou e
+    tudo some no ROLLBACK do fim."""
+    app.dependency_overrides[get_db] = lambda: db
+    try:
+        with TestClient(app) as cliente:
+            yield cliente
+    finally:
+        app.dependency_overrides.pop(get_db, None)
