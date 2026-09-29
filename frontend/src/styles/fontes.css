@@ -1,0 +1,28 @@
+/*
+ * IBM Plex auto-hospedada (SIL OFL 1.1, ver public/fonts/OFL.txt). Sem CDN: o app abre offline
+ * e os .woff2 entram no precache. Os arquivos saem de scripts/gerar-fontes.py — Sans variável,
+ * só o subset latin, reduzido aos caracteres que a interface escreve. Precisou de caractere
+ * novo? Acrescente na lista do script e rode de novo.
+ */
+
+@font-face {
+  font-family: 'Plex Sans';
+  src: url('/fonts/plex-sans-var.woff2') format('woff2-variations');
+  /* A faixa diz ao navegador que o arquivo é variável; sem ela 500–700 saem sintetizados. */
+  font-weight: 100 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plex Mono';
+  src: url('/fonts/plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --fonte-ui: 'Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-mono: 'Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
