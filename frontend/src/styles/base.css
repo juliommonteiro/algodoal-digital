@@ -13,7 +13,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--fonte-sans);
+  font-family: var(--fonte-ui);
   font-size: 16px;
   line-height: 1.5;
   color: var(--tinta);
@@ -75,6 +75,13 @@ textarea {
 .mono {
   font-family: var(--fonte-mono);
   font-weight: 500;
+}
+
+/* Ícone no lugar de caractere (seta, conferido): alinhado à linha de base do texto. */
+.icone-em-linha {
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
 }
 
 /* Some da tela, continua para o leitor de tela. */

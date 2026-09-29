@@ -33,9 +33,7 @@
   --e-7: 28px;
   --e-8: 32px;
 
-  /* Tipografia: só duas famílias, sempre com fallback de sistema */
-  --fonte-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --fonte-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  /* Tipografia: --fonte-ui e --fonte-mono ficam em fontes.css, junto dos @font-face. */
 
   /* Foco de teclado */
   --foco: var(--terracota);

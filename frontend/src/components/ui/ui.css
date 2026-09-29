@@ -15,7 +15,7 @@
   padding: var(--e-3) var(--e-5);
   border: 2px solid transparent;
   border-radius: var(--r-botao);
-  font-family: var(--fonte-sans);
+  font-family: var(--fonte-ui);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.2;

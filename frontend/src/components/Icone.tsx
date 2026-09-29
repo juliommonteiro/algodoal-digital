@@ -73,29 +73,45 @@ const CAMINHOS = {
   ),
 } as const
 
-export type NomeIcone = keyof typeof CAMINHOS
+// Ícones que substituem caracteres no meio do texto: "→" (U+2192) e "✓" (U+2713) não existem na
+// IBM Plex e cairiam para a fonte do sistema, que varia no Android e desalinha. Grid 20x20,
+// traço 1.5 e 1em de lado, para acompanhar o tamanho do texto em volta.
+const EM_LINHA = {
+  seta: <path d="M3 10h13m-4.5-4.5L16 10l-4.5 4.5" />,
+  conferido: <path d="M4 10.5l4 4 8-8" />,
+} as const
+
+export type NomeIcone = keyof typeof CAMINHOS | keyof typeof EM_LINHA
 
 export interface IconeProps extends SVGProps<SVGSVGElement> {
   nome: NomeIcone
-  tamanho?: number
+  /** Em px (padrão 24) ou unidade CSS; os ícones em linha usam 1em por padrão. */
+  tamanho?: number | string
 }
 
-export function Icone({ nome, tamanho = 24, ...resto }: IconeProps) {
+/**
+ * Decorativo (aria-hidden). Se o ícone carrega sentido — a seta entre origem e destino —,
+ * ponha o texto para o leitor de tela ao lado: <span className="so-leitor">para</span>.
+ */
+export function Icone({ nome, tamanho, className, ...resto }: IconeProps) {
+  const emLinha = nome in EM_LINHA
+  const lado = tamanho ?? (emLinha ? '1em' : 24)
   return (
     <svg
-      width={tamanho}
-      height={tamanho}
-      viewBox="0 0 24 24"
+      width={lado}
+      height={lado}
+      viewBox={emLinha ? '0 0 20 20' : '0 0 24 24'}
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.75}
+      strokeWidth={emLinha ? 1.5 : 1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
+      className={[emLinha ? 'icone-em-linha' : null, className].filter(Boolean).join(' ') || undefined}
       {...resto}
     >
-      {CAMINHOS[nome]}
+      {emLinha ? EM_LINHA[nome as keyof typeof EM_LINHA] : CAMINHOS[nome as keyof typeof CAMINHOS]}
     </svg>
   )
 }
