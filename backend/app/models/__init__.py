@@ -6,6 +6,7 @@ from app.models.carrier import Carrier
 from app.models.category import Category
 from app.models.place import Place
 from app.models.place_photo import PlacePhoto
+from app.models.refresh_token import RefreshToken
 from app.models.user import User
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "Category",
     "Place",
     "PlacePhoto",
+    "RefreshToken",
     "User",
 ]
