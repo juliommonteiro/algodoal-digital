@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Any, Literal, get_args
+from typing import Literal, get_args
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 from app.models.place import PLACE_KINDS
 
@@ -39,14 +39,8 @@ class BusinessRead(BaseModel):
     # {"seg": [["09:00", "22:00"]], ...}; dia ausente = fechado.
     opening_hours: dict[str, list[tuple[str, str]]] | None
     price_range: str | None
-    services: list[str]
+    services: list[str]  # NOT NULL DEFAULT '[]' no banco desde a migração 5966baf2fa25
     is_partner: bool
-
-    @field_validator("services", mode="before")
-    @classmethod
-    def _servicos_nulos_viram_lista(cls, valor: Any) -> Any:
-        # No banco a coluna aceita NULL; o contrato promete sempre uma lista.
-        return [] if valor is None else valor
 
 
 class PlaceRead(BaseModel):
