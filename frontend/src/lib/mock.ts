@@ -106,7 +106,7 @@ function uuid(grupo: 'a' | 'b' | 'c' | 'd', n: number): string {
   return `00000000-0000-4000-${grupo}000-${String(n).padStart(12, '0')}`
 }
 
-const CATEGORIAS: Categoria[] = (() => {
+function montarCategorias(): Categoria[] {
   const lista: Categoria[] = []
   let n = 1
   ARVORE.forEach((raiz, ordemRaiz) => {
@@ -124,13 +124,8 @@ const CATEGORIAS: Categoria[] = (() => {
     })
   })
   return lista
-})()
-
-const idCategoria = (slug: string): string => {
-  const categoria = CATEGORIAS.find((c) => c.slug === slug)
-  if (!categoria) throw new Error(`categoria do mock inexistente: ${slug}`)
-  return categoria.id
 }
+
 
 // ---------------------------------------------------------------------------
 // Locais e estabelecimentos (fictícios, iguais ao seed)
@@ -253,21 +248,40 @@ const FOTOS: Record<string, string> = {
 
 const ATUALIZADO_EM = '2026-09-22T18:30:00Z'
 
-const LOCAIS: Local[] = DEFINICOES.map(
-  ([name, kind, categoria, latitude, longitude, description, business], i) => ({
-    id: uuid('b', i + 1),
-    name,
-    description,
-    kind,
-    category_id: idCategoria(categoria),
-    latitude,
-    longitude,
-    is_published: true,
-    updated_at: ATUALIZADO_EM,
-    business: business ?? null,
-    photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
-  }),
-)
+function montarLocais(categorias: Categoria[]): Local[] {
+  const idCategoria = (slug: string): string => {
+    const categoria = categorias.find((c) => c.slug === slug)
+    if (!categoria) throw new Error(`categoria do mock inexistente: ${slug}`)
+    return categoria.id
+  }
+  return DEFINICOES.map(
+    ([name, kind, categoria, latitude, longitude, description, business], i) => ({
+      id: uuid('b', i + 1),
+      name,
+      description,
+      kind,
+      category_id: idCategoria(categoria),
+      latitude,
+      longitude,
+      is_published: true,
+      updated_at: ATUALIZADO_EM,
+      business: business ?? null,
+      photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
+    }),
+  )
+}
+
+// Montados na primeira chamada, não no import: o topo do módulo fica sem efeito colateral e
+// o bundler consegue tirar o mock inteiro do build quando VITE_USAR_MOCK=false.
+let dados: { categorias: Categoria[]; locais: Local[]; usuarios: Usuario[] } | null = null
+
+function banco() {
+  if (!dados) {
+    const categorias = montarCategorias()
+    dados = { categorias, locais: montarLocais(categorias), usuarios: montarUsuarios() }
+  }
+  return dados
+}
 
 // ---------------------------------------------------------------------------
 // Usuários e autenticação de mentira
@@ -276,14 +290,16 @@ const LOCAIS: Local[] = DEFINICOES.map(
 /** Mesmo critério que o cadastro exige no cliente. */
 const SENHA_MINIMA = 8
 
-const USUARIOS: Usuario[] = [
+function montarUsuarios(): Usuario[] {
+  return [
   { id: uuid('c', 1), name: 'Ana Viajante', email: 'ana.turista@example.com', role: 'tourist' },
   { id: uuid('c', 2), name: 'Bento Carroça', email: 'bento.carroceiro@example.com', role: 'carrier' },
   { id: uuid('c', 3), name: 'Célia Parceira', email: 'celia.parceira@example.com', role: 'partner' },
   { id: uuid('c', 4), name: 'Davi Gestor', email: 'davi.admin@example.com', role: 'admin' },
   { id: uuid('c', 5), name: 'Rosa Condutora', email: 'rosa.carroceira@example.com', role: 'carrier' },
   { id: uuid('c', 6), name: 'Tião Boiadeiro', email: 'tiao.carroceiro@example.com', role: 'carrier' },
-]
+  ]
+}
 
 // Quem se cadastra no mock fica só em memória; o refresh token carrega o próprio usuário,
 // então a sessão continua válida depois de recarregar a página.
@@ -319,7 +335,7 @@ function sessao(usuario: Usuario): RespostaLogin {
 
 function buscarPorEmail(email: string): Usuario | undefined {
   const alvo = email.trim().toLowerCase()
-  return [...USUARIOS, ...cadastrados].find((u) => u.email === alvo)
+  return [...banco().usuarios, ...cadastrados].find((u) => u.email === alvo)
 }
 
 // ---------------------------------------------------------------------------
@@ -363,14 +379,15 @@ export const clienteMock: ClienteApi = {
   },
 
   categorias() {
-    return responder(CATEGORIAS)
+    return responder(banco().categorias)
   },
 
   locais(filtros) {
-    let lista = LOCAIS.filter((l) => l.is_published)
+    const { categorias, locais } = banco()
+    let lista = locais.filter((l) => l.is_published)
     if (filtros?.category) {
-      const raiz = CATEGORIAS.find((c) => c.slug === filtros.category)
-      const ids = raiz ? idsDaArvore(CATEGORIAS, raiz.id) : new Set<string>()
+      const raiz = categorias.find((c) => c.slug === filtros.category)
+      const ids = raiz ? idsDaArvore(categorias, raiz.id) : new Set<string>()
       lista = lista.filter((l) => ids.has(l.category_id))
     }
     if (filtros?.kind) lista = lista.filter((l) => l.kind === filtros.kind)
@@ -378,7 +395,7 @@ export const clienteMock: ClienteApi = {
   },
 
   local(id) {
-    const encontrado = LOCAIS.find((l) => l.id === id && l.is_published)
+    const encontrado = banco().locais.find((l) => l.id === id && l.is_published)
     return encontrado ? responder(encontrado) : falhar(404, 'Local não encontrado.')
   },
 }
