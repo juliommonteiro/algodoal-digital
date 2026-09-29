@@ -1,4 +1,6 @@
 @import './styles/fontes.css';
 @import './styles/tokens.css';
 @import './styles/base.css';
+/* Componentes antes das telas: a tela pode ajustar um componente sem brigar por especificidade. */
+@import './components/ui/ui.css';
 @import './styles/telas.css';

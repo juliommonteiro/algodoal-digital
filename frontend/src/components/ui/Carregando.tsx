@@ -1,4 +1,3 @@
-import './ui.css'
 
 export interface CarregandoProps {
   /** Quantos cartões-esqueleto mostrar. */

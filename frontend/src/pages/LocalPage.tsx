@@ -51,7 +51,11 @@ export function LocalPage() {
             icone={<Icone nome="pino" />}
             titulo="Local não encontrado"
             frase="Ele pode ter sido removido ou o link está errado."
-            acao={<Link to="/">Voltar ao mapa</Link>}
+            acao={
+            <Link to="/" className={classesBotao('secundario')}>
+              Voltar ao mapa
+            </Link>
+          }
           />
         ) : (
           <FalhaCarga erro={carga.erro} aoTentar={carga.recarregar} />

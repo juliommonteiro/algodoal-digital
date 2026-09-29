@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { Icone } from '../components/Icone'
 import { EstadoVazio } from '../components/ui/EstadoVazio'
+import { classesBotao } from '../components/ui/classes'
 
 export function NotFoundPage() {
   return (
@@ -11,7 +12,11 @@ export function NotFoundPage() {
         icone={<Icone nome="bussola" />}
         titulo="Página não encontrada"
         frase="O endereço pode estar errado ou a página mudou de lugar."
-        acao={<Link to="/">Voltar ao mapa</Link>}
+        acao={
+            <Link to="/" className={classesBotao('secundario')}>
+              Voltar ao mapa
+            </Link>
+          }
       />
     </section>
   )

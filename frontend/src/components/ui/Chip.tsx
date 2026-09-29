@@ -1,5 +1,4 @@
 import type { ButtonHTMLAttributes, KeyboardEvent, ReactNode } from 'react'
-import './ui.css'
 
 const TECLAS_PROXIMO = new Set(['ArrowRight', 'ArrowDown'])
 const TECLAS_ANTERIOR = new Set(['ArrowLeft', 'ArrowUp'])
@@ -43,6 +42,8 @@ export function GrupoChips({ rotulo, children, className }: GrupoChipsProps) {
       role="radiogroup"
       aria-label={rotulo}
       className={['chips', className].filter(Boolean).join(' ')}
+      // O Firefox torna o contêiner rolável focável; as setas já rolam até o chip.
+      tabIndex={-1}
       onKeyDown={aoTeclar}
     >
       {children}

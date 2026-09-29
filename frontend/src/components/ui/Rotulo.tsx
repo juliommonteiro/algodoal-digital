@@ -1,5 +1,4 @@
 import type { HTMLAttributes, LabelHTMLAttributes } from 'react'
-import './ui.css'
 
 type RotuloProps =
   | ({ as?: 'span' | 'p' | 'h2' | 'h3' } & HTMLAttributes<HTMLElement>)

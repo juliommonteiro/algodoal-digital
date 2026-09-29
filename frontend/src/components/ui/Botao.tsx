@@ -1,6 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
 import { classesBotao, type VarianteBotao } from './classes'
-import './ui.css'
 
 export interface BotaoProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variante?: VarianteBotao

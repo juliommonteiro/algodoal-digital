@@ -1,4 +1,8 @@
-/* Componentes base. Tudo em cima dos tokens; nada de cor solta aqui. */
+/*
+ * Componentes base. Tudo em cima dos tokens; nada de cor solta aqui.
+ * Carregado só pelo src/index.css, antes de styles/telas.css. Não importe este arquivo nos
+ * componentes: o Vite o moveria para depois das telas e a cascata inverteria.
+ */
 
 /* ---------- Botão ---------- */
 .botao {

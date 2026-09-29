@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import './ui.css'
 
 export interface EstadoVazioProps {
   titulo: string

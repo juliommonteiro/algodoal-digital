@@ -38,6 +38,10 @@
 }
 
 .topo__marca {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque);
+  gap: 0.25em; /* em flex o espaço entre "Algodoal" e "Digital" some */
   font-weight: 700;
   font-size: 17px;
   color: var(--verde);
@@ -462,8 +466,10 @@
 }
 .acesso__alternativa a {
   font-weight: 600;
-  display: inline-block;
-  padding: var(--e-3) var(--e-1);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque);
+  padding: 0 var(--e-1);
 }
 
 .acesso__rodape {

@@ -1,6 +1,5 @@
 import { useId, type InputHTMLAttributes, type Ref } from 'react'
 import { Rotulo } from './Rotulo'
-import './ui.css'
 
 export interface CampoProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
   label: string

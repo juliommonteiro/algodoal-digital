@@ -3,6 +3,7 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { EstadoVazio } from '../components/ui/EstadoVazio'
 import type { Perfil } from '../lib/tipos'
 import { useAuth } from './contexto'
+import { classesBotao } from '../components/ui/classes'
 
 export interface RotaProtegidaProps {
   /** Se informado, só esses perfis entram. Sem a prop, basta estar autenticado. */
@@ -31,7 +32,11 @@ export function RotaProtegida({ perfis, children }: RotaProtegidaProps) {
           nivel="h1"
           titulo="Área restrita"
           frase="Esta área é de outro perfil de usuário. Se você acha que deveria ter acesso, fale com a equipe do Algodoal Digital."
-          acao={<Link to="/">Voltar ao mapa</Link>}
+          acao={
+            <Link to="/" className={classesBotao('secundario')}>
+              Voltar ao mapa
+            </Link>
+          }
         />
       </section>
     )
