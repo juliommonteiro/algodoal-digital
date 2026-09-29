@@ -9,7 +9,8 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import event
+from sqlalchemy import event, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Business, Category, Place, PlacePhoto
@@ -270,15 +271,54 @@ def test_local_sem_negocio_tem_business_null_e_photos_vazia(db, api):
     assert corpo["photos"] == []
 
 
-def test_services_nulo_no_banco_sai_como_lista_vazia(db, api):
-    """O contrato promete string[]; a coluna aceita NULL."""
+def test_services_nunca_e_nulo_depois_da_migracao(db, api):
+    """businesses.services é NOT NULL DEFAULT '[]': uma forma só de dizer "sem serviços"."""
+    coluna = db.execute(
+        text(
+            "SELECT is_nullable, column_default FROM information_schema.columns "
+            "WHERE table_name = 'businesses' AND column_name = 'services'"
+        )
+    ).one()
+    assert coluna.is_nullable == "NO"
+    assert coluna.column_default == "'[]'::jsonb"
+    assert db.scalar(text("SELECT count(*) FROM businesses WHERE services IS NULL")) == 0
+
+    # Sem informar, vem lista vazia — pelo ORM e por SQL direto (DEFAULT do banco)
     loja = local(db, categoria(db), kind="business")
-    db.add(Business(place_id=loja.id, services=None, source="ficticio"))
+    db.add(Business(place_id=loja.id, source="ficticio"))
     reler_do_banco(db)
+    assert api.get(f"/api/v1/places/{loja.id}").json()["business"]["services"] == []
 
-    corpo = api.get(f"/api/v1/places/{loja.id}").json()
+    outra = local(db, categoria(db), kind="business")
+    db.execute(
+        text("INSERT INTO businesses (id, place_id) VALUES (gen_random_uuid(), :p)"),
+        {"p": outra.id},
+    )
+    assert api.get(f"/api/v1/places/{outra.id}").json()["business"]["services"] == []
 
-    assert corpo["business"]["services"] == []
+    # None no INSERT pelo ORM conta como "não informado": vale o default, lista vazia
+    terceira = local(db, categoria(db), kind="business")
+    negocio = Business(place_id=terceira.id, services=None, source="ficticio")
+    db.add(negocio)
+    db.flush()
+    assert db.scalar(text("SELECT services FROM businesses WHERE id = :i"), {"i": negocio.id}) == []
+
+    # None no UPDATE é recusado. Sem JSONB(none_as_null=True), o SQLAlchemy gravaria o JSON
+    # 'null' — que passa pelo NOT NULL — e a API quebraria ao montar a lista
+    with pytest.raises(IntegrityError, match="not-null|null value"), db.begin_nested():
+        negocio.services = None
+        db.flush()
+
+    # Por SQL direto, o CHECK recusa JSON null e qualquer coisa que não seja lista
+    for valor in ("null", '{"a": 1}', '"texto"'):
+        with pytest.raises(IntegrityError, match="ck_businesses_services_lista"), db.begin_nested():
+            db.execute(
+                text(
+                    "INSERT INTO businesses (id, place_id, services) "
+                    "VALUES (gen_random_uuid(), :p, CAST(:v AS jsonb))"
+                ),
+                {"p": terceira.id, "v": valor},
+            )
 
 
 def test_detalhe_inexistente_404_e_id_mal_formado_422(api):
