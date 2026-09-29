@@ -1,0 +1,60 @@
+/*
+ * Tokens do sistema de design, extraídos do protótipo aprovado.
+ * Cores em OKLCH; os hex abaixo são o fallback para navegador sem suporte
+ * (convertidos dos mesmos valores; --verde-fundo sai um pouco do gamut sRGB e foi recortado).
+ * Contraste conferido: branco/--verde 7.1:1, --tinta/--fundo 14.3:1, --suave/--fundo 5.2:1.
+ */
+:root {
+  --verde: #176449;
+  --verde-fundo: #004f38;
+  --terracota: #a04f27;
+  --tinta: #1a211c;
+  --tinta-2: #353d36;
+  --suave: #5d665f;
+  --superficie: #fdfcf7;
+  --fundo: #f1efe6;
+  --borda: #dad8cd;
+  /* Areia clara: foco e texto sobre o --verde-fundo (7.1:1). */
+  --areia: #fdd990;
+
+  /* Raios */
+  --r-chip: 20px;
+  --r-botao: 10px;
+  --r-botao-g: 12px;
+  --r-card: 8px;
+
+  /* Espaçamento: múltiplos de 4px */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 20px;
+  --e-6: 24px;
+  --e-7: 28px;
+  --e-8: 32px;
+
+  /* Tipografia: só duas famílias, sempre com fallback de sistema */
+  --fonte-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* Foco de teclado */
+  --foco: var(--terracota);
+
+  /* Alvo de toque mínimo */
+  --toque: 48px;
+}
+
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --verde: oklch(0.45 0.085 165); /* primário: botão, chip ativo, aba ativa */
+    --verde-fundo: oklch(0.38 0.08 165); /* fundo da tela de acesso */
+    --terracota: oklch(0.52 0.12 45); /* acento: alerta, solicitação nova */
+    --tinta: oklch(0.24 0.015 150); /* texto principal */
+    --tinta-2: oklch(0.35 0.015 150); /* texto secundário */
+    --suave: oklch(0.5 0.015 150); /* labels, texto de apoio */
+    --superficie: oklch(0.99 0.006 95); /* cards, branco quente */
+    --fundo: oklch(0.95 0.012 95); /* fundo da aplicação, creme */
+    --borda: oklch(0.88 0.015 95);
+    --areia: oklch(0.9 0.1 85);
+  }
+}

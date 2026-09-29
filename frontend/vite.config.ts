@@ -17,8 +17,8 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#FFFFFF',
-        theme_color: '#1F4D3A',
+        background_color: '#f1efe6', // --fundo
+        theme_color: '#004f38', // --verde-fundo
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
@@ -26,6 +26,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // woff2 entra no precache: as fontes são auto-hospedadas para o app abrir offline.
+        globPatterns: ['**/*.{js,css,html,woff2}'],
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
