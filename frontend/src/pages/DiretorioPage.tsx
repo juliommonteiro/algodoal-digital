@@ -4,32 +4,33 @@ import { ListaLocais } from '../components/ListaLocais'
 import { Carregando } from '../components/ui/Carregando'
 import { filtrarLocais, raizesComLocais, useCatalogo, useFiltrosNaUrl } from '../lib/catalogo'
 
-/** Diretório = locais com dados comerciais (restaurantes, pousadas, artesãos, guias…). */
+/**
+ * Diretório = todos os locais publicados, em lista: praias, trilhas e pontos de coleta junto
+ * com os negócios (protótipo, docs/prototipo/04-diretorio.png). O que o separa do Mapa é o
+ * formato, lista contra mapa, não o conteúdo.
+ */
 export function DiretorioPage() {
   const catalogo = useCatalogo()
   const filtros = useFiltrosNaUrl()
-
-  const estabelecimentos =
-    catalogo.status === 'ok' ? catalogo.dados.locais.filter((l) => l.business !== null) : []
 
   return (
     <section className="page" aria-labelledby="titulo-diretorio">
       <title>Diretório · Algodoal Digital</title>
       <h1 id="titulo-diretorio">Diretório</h1>
       <p className="page__intro">
-        Restaurantes, pousadas, artesãos e guias, com contato pelo WhatsApp.
+        Praias, trilhas, restaurantes, pousadas e serviços da ilha, com contato pelo WhatsApp.
       </p>
 
-      {catalogo.status === 'carregando' && <Carregando rotulo="Carregando estabelecimentos…" />}
+      {catalogo.status === 'carregando' && <Carregando rotulo="Carregando locais…" />}
       {catalogo.status === 'erro' && (
         <FalhaCarga erro={catalogo.erro} aoTentar={catalogo.recarregar} />
       )}
       {catalogo.status === 'ok' && (
         <>
           <FiltrosCatalogo
-            rotuloBusca="Buscar estabelecimento pelo nome"
+            rotuloBusca="Buscar local pelo nome"
             placeholder="Buscar pelo nome…"
-            categorias={raizesComLocais(catalogo.dados.categorias, estabelecimentos)}
+            categorias={raizesComLocais(catalogo.dados.categorias, catalogo.dados.locais)}
             categoriaAtiva={filtros.categoria}
             busca={filtros.busca}
             aoMudarCategoria={filtros.definirCategoria}
@@ -37,14 +38,14 @@ export function DiretorioPage() {
           />
           <ListaLocais
             locais={filtrarLocais(
-              estabelecimentos,
+              catalogo.dados.locais,
               catalogo.dados.categorias,
               filtros.categoria,
               filtros.busca,
             )}
             categorias={catalogo.dados.categorias}
-            singular="estabelecimento"
-            plural="estabelecimentos"
+            singular="local"
+            plural="locais"
           />
         </>
       )}

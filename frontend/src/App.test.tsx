@@ -112,25 +112,47 @@ describe('cadastro', () => {
 })
 
 describe('diretório', () => {
-  it('filtra a lista ao escolher uma categoria', async () => {
+  it('lista todos os locais publicados, não só estabelecimentos', async () => {
     renderizarEm('/diretorio')
 
-    // Antes do filtro: estabelecimentos de várias categorias
-    expect(await screen.findByRole('heading', { name: 'Restaurante Vento Sul' })).toBeInTheDocument()
+    // Praia, trilha e ponto de coleta aparecem junto com os negócios (protótipo 04-diretorio)
+    expect(await screen.findByRole('heading', { name: 'Praia do Cajueiro Torto' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Trilha do Vento Sul' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ponto de Coleta Boca da Mata' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Restaurante Vento Sul' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Pousada Maré Mansa' })).toBeInTheDocument()
-
+    // Mesmo conteúdo do Mapa: os 15 locais publicados do mock
+    expect(screen.getByRole('heading', { name: '15 locais' })).toBeInTheDocument()
+    // Chips cobrem as categorias sem negócio também
     const grupo = screen.getByRole('radiogroup', { name: 'Filtrar por categoria' })
+    for (const nome of ['Turismo', 'Alimentação', 'Hospedagem', 'Cultura', 'Preservação']) {
+      expect(within(grupo).getByRole('radio', { name: nome })).toBeInTheDocument()
+    }
+  })
+
+  it('filtra a lista ao escolher uma categoria', async () => {
+    renderizarEm('/diretorio')
+    await screen.findByRole('heading', { name: 'Praia do Cajueiro Torto' })
+    const grupo = screen.getByRole('radiogroup', { name: 'Filtrar por categoria' })
+
+    // Turismo: praias e trilhas (e pontos turísticos), sem os negócios
+    const turismo = within(grupo).getByRole('radio', { name: 'Turismo' })
+    fireEvent.click(turismo)
+    expect(turismo).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('heading', { name: 'Praia do Cajueiro Torto' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Trilha das Dunas Claras' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Restaurante Vento Sul' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Ponto de Coleta Boca da Mata' })).not.toBeInTheDocument()
+
+    // Hospedagem: só as pousadas
     const hospedagem = within(grupo).getByRole('radio', { name: 'Hospedagem' })
-    expect(hospedagem).toHaveAttribute('aria-checked', 'false')
-
     fireEvent.click(hospedagem)
-
     expect(hospedagem).toHaveAttribute('aria-checked', 'true')
+    expect(turismo).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByRole('heading', { name: 'Pousada Maré Mansa' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Pousada Rede de Areia' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Restaurante Vento Sul' })).not.toBeInTheDocument()
-    // Diretório só lista estabelecimentos: praia não aparece nem em "Todas"
     expect(screen.queryByRole('heading', { name: 'Praia do Cajueiro Torto' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Restaurante Vento Sul' })).not.toBeInTheDocument()
   })
 
   it('busca pelo nome sem diferenciar acento', async () => {
@@ -141,6 +163,7 @@ describe('diretório', () => {
 
     expect(screen.getByRole('heading', { name: 'Pousada Maré Mansa' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Ateliê Linha da Maré' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Praia da Maré Virada' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Restaurante Vento Sul' })).not.toBeInTheDocument()
   })
 })
