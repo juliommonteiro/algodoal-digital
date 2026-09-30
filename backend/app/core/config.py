@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # depois de um dia offline (docs/arquitetura.md, "Autenticação e perfis").
     access_token_minutos: int = 15
     refresh_token_dias: int = 30
+    # Reapresentar um token de renovação trocado há menos que isto devolve o par que o
+    # substituiu, em vez de contar como reuso: duas abas renovando juntas é corrida, não ataque.
+    refresh_janela_de_graca_segundos: int = Field(default=30, ge=0)
     jwt_algoritmo: str = "HS256"
 
     @model_validator(mode="after")

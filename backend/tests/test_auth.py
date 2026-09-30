@@ -222,7 +222,28 @@ def test_usuario_inativo_perde_o_acesso(db, api):
 # ---------------------------------------------------------------------------- rotação
 
 
-def test_refresh_devolve_par_novo_e_o_antigo_deixa_de_funcionar(api):
+def jti_de(token: str) -> str:
+    return jwt.decode(token, options={"verify_signature": False})["jti"]
+
+
+def registro_de(db, token: str) -> RefreshToken:
+    db.expire_all()
+    return db.scalar(select(RefreshToken).where(RefreshToken.jti == jti_de(token)))
+
+
+def passar_da_janela(db, token: str) -> None:
+    """Recua a revogação do token para antes da janela de graça: o mesmo efeito de esperar."""
+    janela = get_settings().refresh_janela_de_graca_segundos
+    registro = registro_de(db, token)
+    registro.revoked_at -= timedelta(seconds=janela + 1)
+    db.flush()
+
+
+def avisos_de_reuso(caplog) -> list[logging.LogRecord]:
+    return [r for r in caplog.records if "Reuso de token de renovação" in r.getMessage()]
+
+
+def test_refresh_devolve_par_novo_e_revoga_o_antigo_por_rotacao(db, api):
     _, sessao = conta_com_sessao(api)
 
     nova = renovar(api, sessao["refresh_token"])
@@ -233,40 +254,143 @@ def test_refresh_devolve_par_novo_e_o_antigo_deixa_de_funcionar(api):
     assert corpo["refresh_token"] != sessao["refresh_token"]
     assert corpo["access_token"] != sessao["access_token"]
     assert eu(api, corpo["access_token"]).status_code == 200
-    # O par antigo não vale mais: nem o acesso (sessão revogada) nem a renovação
-    assert eu(api, sessao["access_token"]).status_code == 401
-    assert renovar(api, sessao["refresh_token"]).status_code == 401
+    assert eu(api, sessao["access_token"]).status_code == 401  # a sessão antiga caiu
+    antigo = registro_de(db, sessao["refresh_token"])
+    assert antigo.revoked_reason == "rotation"
+    assert antigo.replaced_by_jti == jti_de(corpo["refresh_token"])
 
 
-def test_reuso_de_renovacao_revogada_derruba_todas_as_sessoes(db, api, caplog):
-    """O teste mais importante do bloco: token revogado que volta = vazou."""
+def test_refresh_repetido_na_janela_devolve_o_mesmo_par_e_mantem_a_sessao(db, api, caplog):
+    """Duas abas renovando quase juntas: corrida, não ataque."""
+    email, sessao = conta_com_sessao(api)
+
+    primeira = renovar(api, sessao["refresh_token"])
+    with caplog.at_level(logging.INFO, logger="app.services.auth"):
+        segunda = renovar(api, sessao["refresh_token"])
+        terceira = renovar(api, sessao["refresh_token"])
+
+    assert primeira.status_code == segunda.status_code == terceira.status_code == 200
+    assert segunda.json() == primeira.json()  # o mesmo par, sem emitir outro
+    assert terceira.json() == primeira.json()
+    assert eu(api, segunda.json()["access_token"]).status_code == 200
+    # Nada revogado nem emitido além da primeira rotação
+    assert sessoes_ativas(db, email) == 1
+    total = db.scalar(
+        select(func.count())
+        .select_from(RefreshToken)
+        .join(User, User.id == RefreshToken.user_id)
+        .where(User.email == email)
+    )
+    assert total == 2
+    assert avisos_de_reuso(caplog) == []
+
+
+def test_refresh_repetido_fora_da_janela_e_reuso_e_derruba_todas_as_sessoes(db, api, caplog):
+    """O teste de reuso: token trocado que volta depois da janela = vazou."""
     email, celular = conta_com_sessao(api)  # sessão 1
     notebook = entrar(api, email).json()  # sessão 2, independente
-    assert sessoes_ativas(db, email) == 2
-
-    # O dono renova no celular; o token antigo fica revogado (e alguém o copiou)
     celular_novo = renovar(api, celular["refresh_token"]).json()
-    assert eu(api, celular_novo["access_token"]).status_code == 200
+    assert sessoes_ativas(db, email) == 2
+    passar_da_janela(db, celular["refresh_token"])
 
     with caplog.at_level(logging.WARNING, logger="app.services.auth"):
         reuso = renovar(api, celular["refresh_token"])
-    avisos = [r for r in caplog.records if "Reuso de token de renovação" in r.getMessage()]
+    avisos = avisos_de_reuso(caplog)
 
     assert reuso.status_code == 401
-    # Tudo caiu: as duas sessões, acesso e renovação
+    # Tudo caiu: as duas sessões, acesso e renovação, com motivo `reuse`
     assert sessoes_ativas(db, email) == 0
     assert eu(api, celular_novo["access_token"]).status_code == 401
     assert eu(api, notebook["access_token"]).status_code == 401
-    assert renovar(api, celular_novo["refresh_token"]).status_code == 401
-    assert renovar(api, notebook["refresh_token"]).status_code == 401
+    assert registro_de(db, celular_novo["refresh_token"]).revoked_reason == "reuse"
+    assert registro_de(db, notebook["refresh_token"]).revoked_reason == "reuse"
+    assert registro_de(db, celular["refresh_token"]).revoked_reason == "rotation"  # não muda
     # E o evento foi registrado, com o usuário e as 2 sessões derrubadas
     usuario = db.scalar(select(User).where(User.email == email))
     assert len(avisos) == 1
-    assert "2 sessão(ões)" in avisos[0].getMessage()
     assert avisos[0].levelno == logging.WARNING
     assert str(usuario.id) in avisos[0].getMessage()
+    assert "2 sessão(ões)" in avisos[0].getMessage()
+    # Os tokens derrubados voltando depois são só 401 (motivo reuse), sem novo evento
+    assert renovar(api, celular_novo["refresh_token"]).status_code == 401
+    assert len(avisos_de_reuso(caplog)) == 1
     # A conta segue utilizável: basta entrar de novo
     assert entrar(api, email).status_code == 200
+
+
+def test_janela_de_graca_e_configuravel(db, api, monkeypatch):
+    monkeypatch.setattr(get_settings(), "refresh_janela_de_graca_segundos", 0)
+    email, sessao = conta_com_sessao(api)
+    renovar(api, sessao["refresh_token"])
+
+    # Janela zero: reapresentar na hora já é reuso
+    assert renovar(api, sessao["refresh_token"]).status_code == 401
+    assert sessoes_ativas(db, email) == 0
+
+
+def test_token_de_logout_reapresentado_devolve_401_sem_derrubar_as_outras(db, api, caplog):
+    """Outra aba reapresentando um token que já saiu: não é vazamento."""
+    email, celular = conta_com_sessao(api)
+    notebook = entrar(api, email).json()
+    api.post("/api/v1/auth/logout", json={"refresh_token": celular["refresh_token"]})
+    assert registro_de(db, celular["refresh_token"]).revoked_reason == "logout"
+
+    with caplog.at_level(logging.WARNING, logger="app.services.auth"):
+        resposta = renovar(api, celular["refresh_token"])
+        passar_da_janela(db, celular["refresh_token"])  # nem depois da janela
+        depois = renovar(api, celular["refresh_token"])
+
+    assert resposta.status_code == depois.status_code == 401
+    assert eu(api, notebook["access_token"]).status_code == 200
+    assert renovar(api, notebook["refresh_token"]).status_code == 200
+    assert sessoes_ativas(db, email) == 1
+    assert avisos_de_reuso(caplog) == []
+
+
+def test_cadeia_de_rotacoes_e_rastreavel_por_replaced_by_jti(db, api):
+    _, sessao = conta_com_sessao(api)
+    tokens = [sessao["refresh_token"]]
+    for _ in range(3):  # A -> B -> C -> D
+        tokens.append(renovar(api, tokens[-1]).json()["refresh_token"])
+
+    registros = [registro_de(db, t) for t in tokens]
+
+    for anterior, seguinte in zip(registros, registros[1:], strict=False):
+        assert anterior.revoked_reason == "rotation"
+        assert anterior.replaced_by_jti == seguinte.jti
+    assert registros[-1].revoked_at is None
+    assert registros[-1].replaced_by_jti is None
+    # Seguindo a cadeia a partir de A, chega-se a D
+    atual, passos = registros[0], 0
+    while atual.replaced_by_jti:
+        atual = db.scalar(select(RefreshToken).where(RefreshToken.jti == atual.replaced_by_jti))
+        passos += 1
+    assert (atual.jti, passos) == (registros[-1].jti, 3)
+
+
+def test_na_janela_quem_reapresenta_o_inicio_da_cadeia_recebe_o_par_da_ponta(api):
+    """A -> B -> C em sequência rápida: o par de B já não vale; quem traz A recebe o de C."""
+    _, a = conta_com_sessao(api)
+    b = renovar(api, a["refresh_token"]).json()
+    c = renovar(api, b["refresh_token"]).json()
+
+    resposta = renovar(api, a["refresh_token"])
+
+    assert resposta.status_code == 200
+    assert resposta.json() == c
+    assert eu(api, resposta.json()["access_token"]).status_code == 200
+
+
+def test_janela_nao_ressuscita_sessao_encerrada_por_logout(db, api, caplog):
+    email, a = conta_com_sessao(api)
+    b = renovar(api, a["refresh_token"]).json()
+    api.post("/api/v1/auth/logout", json={"refresh_token": b["refresh_token"]})
+
+    with caplog.at_level(logging.WARNING, logger="app.services.auth"):
+        resposta = renovar(api, a["refresh_token"])  # dentro da janela, mas B saiu
+
+    assert resposta.status_code == 401
+    assert avisos_de_reuso(caplog) == []
 
 
 def test_renovacao_desconhecida_ou_forjada_devolve_401(api):
@@ -295,19 +419,6 @@ def test_logout_revoga_o_token_apresentado_e_so_a_sessao_dele(db, api):
     assert eu(api, notebook["access_token"]).status_code == 200  # a outra sessão segue
     assert sessoes_ativas(db, email) == 1
     assert api.post("/api/v1/auth/logout", json=corpo).status_code == 204  # idempotente
-
-
-def test_renovar_com_token_de_logout_conta_como_reuso(db, api):
-    """Depois do logout, o token está revogado; se ele aparecer no /refresh, vazou — e a
-    regra de reuso derruba todas as sessões, inclusive as que não fizeram logout."""
-    email, celular = conta_com_sessao(api)
-    notebook = entrar(api, email).json()
-    api.post("/api/v1/auth/logout", json={"refresh_token": celular["refresh_token"]})
-
-    assert renovar(api, celular["refresh_token"]).status_code == 401
-
-    assert eu(api, notebook["access_token"]).status_code == 401
-    assert sessoes_ativas(db, email) == 0
 
 
 # ---------------------------------------------------------------------------- perfis
