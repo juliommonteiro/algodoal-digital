@@ -1,11 +1,14 @@
 from functools import lru_cache
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConfiguracaoAusente(RuntimeError):
     """Falta uma variável de ambiente obrigatória."""
+
+
+CHAVE_DE_DESENVOLVIMENTO = "troque-isto-em-producao"
 
 
 class Settings(BaseSettings):
@@ -17,8 +20,29 @@ class Settings(BaseSettings):
     # Sem padrão de propósito: um "localhost" de reserva fazia a API subir contra o banco
     # errado quando a variável faltava (dentro do container, localhost é o próprio container).
     database_url: str = Field(min_length=1)
-    secret_key: str = "troque-isto-em-producao"
+    secret_key: str = CHAVE_DE_DESENVOLVIMENTO
     cors_origins: str = "http://localhost:5173"
+
+    # Tokens (S5). Acesso curto; renovação longa para o turista não precisar entrar de novo
+    # depois de um dia offline (docs/arquitetura.md, "Autenticação e perfis").
+    access_token_minutos: int = 15
+    refresh_token_dias: int = 30
+    # Reapresentar um token de renovação trocado há menos que isto devolve o par que o
+    # substituiu, em vez de contar como reuso: duas abas renovando juntas é corrida, não ataque.
+    refresh_janela_de_graca_segundos: int = Field(default=30, ge=0)
+    jwt_algoritmo: str = "HS256"
+
+    @model_validator(mode="after")
+    def _chave_forte_em_producao(self) -> "Settings":
+        # A chave assina os tokens: com a de desenvolvimento, qualquer um forjaria um admin.
+        if self.environment == "production" and (
+            self.secret_key == CHAVE_DE_DESENVOLVIMENTO or len(self.secret_key) < 32
+        ):
+            raise ValueError(
+                "SECRET_KEY de produção precisa ser trocada e ter pelo menos 32 caracteres "
+                "(gere com: python -c 'import secrets; print(secrets.token_urlsafe(48))')."
+            )
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:

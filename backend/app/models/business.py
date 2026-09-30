@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, String
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,8 @@ class Business(UUIDPkMixin, TimestampMixin, Base):
     __tablename__ = "businesses"
     __table_args__ = (
         CheckConstraint("source IN ('ficticio', 'campo', 'osm')", name="source_valido"),
+        # Nem SQL NULL (NOT NULL) nem JSON null, objeto ou texto: sempre uma lista.
+        CheckConstraint("jsonb_typeof(services) = 'array'", name="services_lista"),
     )
 
     # UNIQUE: um place tem no máximo um business (índice ix_businesses_place_id).
@@ -34,7 +36,11 @@ class Business(UUIDPkMixin, TimestampMixin, Base):
     # {"seg": [["09:00", "22:00"]], ...}
     opening_hours: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     price_range: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    services: Mapped[list[Any] | None] = mapped_column(JSONB, nullable=True)
+    # Uma forma só de dizer "sem serviços": lista vazia. none_as_null: sem ele, o SQLAlchemy
+    # grava o None do Python como o JSON 'null' (não SQL NULL) e passaria pelo NOT NULL.
+    services: Mapped[list[Any]] = mapped_column(
+        JSONB(none_as_null=True), nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
     is_partner: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )

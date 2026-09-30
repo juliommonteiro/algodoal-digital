@@ -461,8 +461,12 @@ def _seed_places(session: Session, categorias: dict[str, Category]) -> dict[str,
 
 
 def _seed_place_photos(session: Session, places: dict[str, Place]) -> None:
-    for posicao, definicao in enumerate(PLACE_PHOTOS):
+    # position conta a partir de 0 dentro de cada local, na ordem de PLACE_PHOTOS.
+    proxima_posicao: dict[str, int] = {}
+    for definicao in PLACE_PHOTOS:
         local = places[definicao["place"]]
+        posicao = proxima_posicao.get(local.name, 0)
+        proxima_posicao[local.name] = posicao + 1
         existente = session.scalar(
             select(PlacePhoto).where(PlacePhoto.storage_key == definicao["storage_key"])
         )
@@ -472,6 +476,10 @@ def _seed_place_photos(session: Session, places: dict[str, Place]) -> None:
                     place_id=local.id, storage_key=definicao["storage_key"], position=posicao
                 )
             )
+        elif existente.position != posicao:
+            # Bancos semeados antes da correção têm a numeração global antiga (0, 1, 2 entre
+            # locais diferentes); rodar o seed de novo acerta.
+            existente.position = posicao
     session.flush()
 
 

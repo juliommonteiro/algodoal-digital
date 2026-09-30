@@ -7,6 +7,7 @@ from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.limites import limiter
 from app.db.session import get_db
 from app.main import app
 
@@ -53,6 +54,9 @@ def api(db: Session) -> Generator[TestClient, None, None]:
     """Cliente HTTP cujas rotas usam a sessão `db` do teste: veem o que o teste criou e
     tudo some no ROLLBACK do fim."""
     app.dependency_overrides[get_db] = lambda: db
+    # O rate limit conta em memória, no processo: sem zerar, a contagem passaria de um teste
+    # para o outro e o sexto login da suíte já daria 429.
+    limiter.reset()
     try:
         with TestClient(app) as cliente:
             yield cliente
