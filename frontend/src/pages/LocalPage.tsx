@@ -8,6 +8,7 @@ import { Carregando } from '../components/ui/Carregando'
 import { classesBotao } from '../components/ui/classes'
 import { EstadoVazio } from '../components/ui/EstadoVazio'
 import { Rotulo } from '../components/ui/Rotulo'
+import { buscarLocal } from '../lib/catalogo'
 import { porId } from '../lib/categorias'
 import { api } from '../lib/cliente'
 import {
@@ -28,7 +29,7 @@ export function LocalPage() {
   const navegar = useNavigate()
   const local = useLocation()
   const carga = useCarregar(`local:${id}`, async () => {
-    const [dados, categorias] = await Promise.all([api.local(id), api.categorias()])
+    const [dados, categorias] = await Promise.all([buscarLocal(id), api.categorias()])
     return { local: dados, categoria: porId(categorias).get(dados.category_id) }
   })
 
