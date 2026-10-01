@@ -3,6 +3,7 @@ import { RotaProtegida } from './auth/RotaProtegida'
 import { Layout } from './components/Layout'
 import { Raiz } from './components/Raiz'
 import { AcessoPage } from './pages/AcessoPage'
+import { AdminIndisponivel, AdminPage } from './pages/AdminPage'
 import { CadastroPage } from './pages/CadastroPage'
 import { CarrocaPage } from './pages/CarrocaPage'
 import { DiretorioPage } from './pages/DiretorioPage'
@@ -20,6 +21,19 @@ export const routes: RouteObject[] = [
       // Públicas e fora do layout de abas
       { path: 'entrar', element: <AcessoPage /> },
       { path: 'criar-conta', element: <CadastroPage /> },
+
+      // Painel administrativo: fora das abas (é desktop-first), carregado sob demanda e fora do
+      // precache — o código dele não vai para o celular do turista. Quem não é admin volta ao
+      // mapa.
+      {
+        path: 'admin/*',
+        element: (
+          <RotaProtegida perfis={['admin']} semPerfilVaiPara="/">
+            <AdminPage />
+          </RotaProtegida>
+        ),
+        errorElement: <AdminIndisponivel />,
+      },
 
       {
         element: <Layout />,
@@ -67,21 +81,6 @@ export const routes: RouteObject[] = [
               },
             ],
           },
-          {
-            element: <RotaProtegida perfis={['admin']} />,
-            children: [
-              {
-                path: 'admin',
-                element: (
-                  <EmBrevePage
-                    titulo="Administração"
-                    frase="O painel mínimo para cadastrar locais e estabelecimentos chega na S6."
-                  />
-                ),
-              },
-            ],
-          },
-
           { path: '*', element: <NotFoundPage /> },
         ],
       },

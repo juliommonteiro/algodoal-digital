@@ -12,6 +12,7 @@ import { ErroApi, obterTokenAcesso } from './api'
 import { idsDaArvore } from './categorias'
 import type {
   Categoria,
+  LocalAdmin,
   ClienteApi,
   Local,
   Negocio,
@@ -27,14 +28,18 @@ export function configurarMock(opcoes: { atrasoMs: number }): void {
   atrasoMs = opcoes.atrasoMs
 }
 
-function responder<T>(valor: T): Promise<T> {
+export function responder<T>(valor: T): Promise<T> {
   // structuredClone: quem recebe pode mexer no objeto sem estragar o "banco" do mock.
   return new Promise((resolve) => setTimeout(() => resolve(structuredClone(valor)), atrasoMs))
 }
 
-function falhar(status: number, mensagem: string): Promise<never> {
+export function falhar(
+  status: number,
+  mensagem: string,
+  campos: Record<string, string> = {},
+): Promise<never> {
   return new Promise((_, reject) =>
-    setTimeout(() => reject(new ErroApi(status, mensagem)), atrasoMs),
+    setTimeout(() => reject(new ErroApi(status, mensagem, campos)), atrasoMs),
   )
 }
 
@@ -252,7 +257,10 @@ const FOTOS: Record<string, string> = {
 
 const ATUALIZADO_EM = '2026-09-22T18:30:00Z'
 
-function montarLocais(categorias: Categoria[]): Local[] {
+/** Como o banco guarda: com o que o público não vê (remoção, origem). */
+export type LocalDoMock = LocalAdmin
+
+function montarLocais(categorias: Categoria[]): LocalDoMock[] {
   const idCategoria = (slug: string): string => {
     const categoria = categorias.find((c) => c.slug === slug)
     if (!categoria) throw new Error(`categoria do mock inexistente: ${slug}`)
@@ -271,13 +279,16 @@ function montarLocais(categorias: Categoria[]): Local[] {
       updated_at: ATUALIZADO_EM,
       business: business ?? null,
       photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
+      deleted_at: null,
+      source: 'ficticio' as const,
+      created_at: ATUALIZADO_EM,
     }),
   )
 }
 
 // Montados na primeira chamada, não no import: o topo do módulo fica sem efeito colateral e
 // o bundler consegue tirar o mock inteiro do build quando VITE_USAR_MOCK=false.
-let dados: { categorias: Categoria[]; locais: Local[]; usuarios: Usuario[] } | null = null
+let dados: { categorias: Categoria[]; locais: LocalDoMock[]; usuarios: Usuario[] } | null = null
 
 function banco() {
   if (!dados) {
@@ -286,6 +297,20 @@ function banco() {
   }
   return dados
 }
+
+/** Para o painel administrativo no modo mock (src/admin/): o mesmo "banco", mutável — o que
+ * o admin cria ou remove aparece (ou some) no mapa público. */
+export function bancoDoMock() {
+  return banco()
+}
+
+/** O público não vê o que só o painel vê. */
+function publico(local: LocalDoMock): Local {
+  const { deleted_at: _d, source: _s, created_at: _c, ...visivel } = local
+  return visivel
+}
+
+const visivelAoPublico = (l: LocalDoMock) => l.is_published && l.deleted_at === null
 
 // ---------------------------------------------------------------------------
 // Usuários e autenticação de mentira
@@ -296,6 +321,10 @@ const SENHA_MINIMA = 8
 
 function montarUsuarios(): Usuario[] {
   return [
+  // Contas de teste do seed (README, "Contas de teste")
+  { id: uuid('c', 7), name: 'Admin de Teste', email: 'admin@example.com', role: 'admin' },
+  { id: uuid('c', 8), name: 'Turista de Teste', email: 'turista@example.com', role: 'tourist' },
+  { id: uuid('c', 9), name: 'Carroceiro de Teste', email: 'carroceiro@example.com', role: 'carrier' },
   { id: uuid('c', 1), name: 'Ana Viajante', email: 'ana.turista@example.com', role: 'tourist' },
   { id: uuid('c', 2), name: 'Bento Carroça', email: 'bento.carroceiro@example.com', role: 'carrier' },
   { id: uuid('c', 3), name: 'Célia Parceira', email: 'celia.parceira@example.com', role: 'partner' },
@@ -388,18 +417,18 @@ export const clienteMock: ClienteApi = {
 
   locais(filtros) {
     const { categorias, locais } = banco()
-    let lista = locais.filter((l) => l.is_published)
+    let lista = locais.filter(visivelAoPublico)
     if (filtros?.category) {
       const raiz = categorias.find((c) => c.slug === filtros.category)
       const ids = raiz ? idsDaArvore(categorias, raiz.id) : new Set<string>()
       lista = lista.filter((l) => ids.has(l.category_id))
     }
     if (filtros?.kind) lista = lista.filter((l) => l.kind === filtros.kind)
-    return responder(lista)
+    return responder(lista.map(publico))
   },
 
   local(id) {
-    const encontrado = banco().locais.find((l) => l.id === id && l.is_published)
-    return encontrado ? responder(encontrado) : falhar(404, 'Local não encontrado.')
+    const encontrado = banco().locais.find((l) => l.id === id && visivelAoPublico(l))
+    return encontrado ? responder(publico(encontrado)) : falhar(404, 'Local não encontrado.')
   },
 }

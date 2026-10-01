@@ -61,10 +61,12 @@ describe('rotas protegidas', () => {
 
   it('perfil sem permissão vê "Área restrita" em vez do painel', () => {
     simularSessao() // turista
-    renderizarEm('/admin')
+    renderizarEm('/carroceiro')
 
     expect(screen.getByRole('heading', { name: 'Área restrita' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Administração' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Painel do carroceiro' }),
+    ).not.toBeInTheDocument()
   })
 })
 

@@ -72,6 +72,11 @@ export default defineConfig({
         // Entram no precache, para o app abrir offline: fontes auto-hospedadas (woff2), o mapa
         // da ilha (pmtiles, 707 kB) e os glifos e o sprite do estilo do mapa.
         globPatterns: ['**/*.{js,css,html,woff2,pmtiles}', 'mapa/**/*.{pbf,json,png}'],
+        // Fica de fora o painel administrativo (src/admin/, chunk PainelAdmin-*.js e .css): o
+        // código dele não vai para o celular do turista. Quem abre /admin baixa com rede; sem
+        // rede, a rota mostra "O painel não abriu" (pages/AdminPage.tsx). O nome do chunk vem
+        // do arquivo importado em pages/AdminPage.tsx — renomeou lá, renomeie aqui.
+        globIgnores: ['**/PainelAdmin-*'],
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],

@@ -8,6 +8,9 @@ import { classesBotao } from '../components/ui/classes'
 export interface RotaProtegidaProps {
   /** Se informado, só esses perfis entram. Sem a prop, basta estar autenticado. */
   perfis?: Perfil[]
+  /** Perfil errado vai para esta rota em vez de ver "área restrita" (ex.: o painel admin
+   * manda de volta ao mapa). */
+  semPerfilVaiPara?: string
   children?: ReactNode
 }
 
@@ -16,7 +19,7 @@ export interface RotaProtegidaProps {
  * Com sessão mas perfil errado: mostra "área restrita" (mandar para o login não resolveria).
  * Use como elemento de rota-pai (renderiza <Outlet />) ou envolvendo a tela.
  */
-export function RotaProtegida({ perfis, children }: RotaProtegidaProps) {
+export function RotaProtegida({ perfis, semPerfilVaiPara, children }: RotaProtegidaProps) {
   const { usuario } = useAuth()
   const local = useLocation()
 
@@ -26,6 +29,7 @@ export function RotaProtegida({ perfis, children }: RotaProtegidaProps) {
   }
 
   if (perfis && !perfis.includes(usuario.role)) {
+    if (semPerfilVaiPara) return <Navigate to={semPerfilVaiPara} replace />
     return (
       <section className="page">
         <EstadoVazio
