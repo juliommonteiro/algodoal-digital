@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router'
+import { ErroApi } from './api'
 import { categoriasRaiz, idsDaArvore } from './categorias'
 import { api } from './cliente'
 import { normalizar } from './formatos'
@@ -70,5 +71,24 @@ export function useFiltrosNaUrl() {
     busca: params.get('q') ?? '',
     definirCategoria: (slug: string) => atualizar('categoria', slug),
     definirBusca: (texto: string) => atualizar('q', texto),
+  }
+}
+
+/**
+ * Detalhe de um local, com reserva para quando não há rede.
+ *
+ * O service worker guarda o detalhe de cada local que já foi aberto com rede; um que nunca foi
+ * aberto não está lá. Mas a lista do catálogo (que fica em cache desde a instalação) traz cada
+ * local inteiro, no mesmo formato: sem rede, o detalhe sai de lá. Só por falta de rede — um
+ * 404 continua sendo "não encontrado".
+ */
+export async function buscarLocal(id: string): Promise<Local> {
+  try {
+    return await api.local(id)
+  } catch (erro) {
+    if (!(erro instanceof ErroApi && erro.semRede)) throw erro
+    const daLista = (await api.locais()).find((local) => local.id === id)
+    if (!daLista) throw erro
+    return daLista
   }
 }

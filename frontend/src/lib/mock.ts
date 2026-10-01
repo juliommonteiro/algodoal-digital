@@ -2,7 +2,9 @@
  * Cliente de mentira com a mesma interface do real (ClienteApi), para o front andar
  * antes dos endpoints da S5. Ligado por VITE_USAR_MOCK (ver .env.example).
  *
- * Os dados espelham o seed do backend (backend/scripts/seed.py) e são TODOS FICTÍCIOS:
+ * Os dados espelham o seed do backend (backend/scripts/seed.py) — mesmos nomes, mesmas
+ * coordenadas, mesmo ponto de carroças: trocar VITE_USAR_MOCK não muda o que aparece na tela.
+ * São TODOS FICTÍCIOS:
  * nomes inventados, telefones na faixa reservada (91) 95555-XXXX, e-mails @example.com e
  * coordenadas apenas plausíveis para a Ilha de Maiandeua.
  */
@@ -152,25 +154,27 @@ type DefinicaoLocal = [
 ]
 
 const DEFINICOES: DefinicaoLocal[] = [
-  ['Praia do Cajueiro Torto', 'beach', 'praias', -0.5852, -47.5614,
+  ['Praia do Cajueiro Torto', 'beach', 'praias', -0.5795, -47.5796,
     'Faixa de areia larga, boa para banho na maré baixa. Local fictício.'],
-  ['Praia da Maré Virada', 'beach', 'praias', -0.5927, -47.5723,
+  ['Praia da Maré Virada', 'beach', 'praias', -0.6076, -47.58195,
     'Mar aberto e vento constante à tarde. Local fictício.'],
-  ['Praia do Sol Deitado', 'beach', 'praias', -0.6041, -47.5889,
+  ['Praia do Sol Deitado', 'beach', 'praias', -0.625, -47.5406,
     'Trecho tranquilo, sem estrutura. Local fictício.'],
-  ['Trilha do Vento Sul', 'trail', 'trilhas', -0.5983, -47.5568,
+  ['Trilha do Vento Sul', 'trail', 'trilhas', -0.5855, -47.5805,
     'Cerca de 40 minutos entre o campo e o mangue. Local fictício.'],
-  ['Trilha das Dunas Claras', 'trail', 'trilhas', -0.6105, -47.5792,
+  ['Trilha das Dunas Claras', 'trail', 'trilhas', -0.6038, -47.583,
     'Percurso curto sobre dunas fixas. Local fictício.'],
-  ['Mirante da Pedra Lisa', 'tourist_point', 'pontos-turisticos', -0.5889, -47.5946,
+  ['Mirante da Pedra Lisa', 'tourist_point', 'pontos-turisticos', -0.5879, -47.5868,
     'Ponto alto com vista para a foz. Local fictício.'],
-  ['Passeio de Canoa ao Entardecer', 'experience', 'experiencias', -0.6018, -47.5661,
+  ['Passeio de Canoa ao Entardecer', 'experience', 'experiencias', -0.5966, -47.5842,
     'Saída de canoa pelo furo, com guia local. Experiência fictícia.'],
-  ['Roda de Carimbó do Terreiro Velho', 'culture', 'cultura-local', -0.5944, -47.5837,
+  ['Roda de Carimbó do Terreiro Velho', 'culture', 'cultura-local', -0.5915, -47.5852,
     'Roda aberta aos sábados na praça. Evento fictício.'],
-  ['Ponto de Coleta Boca da Mata', 'collection_point', 'pontos-de-coleta', -0.6073, -47.5549,
+  ['Ponto de Coleta Boca da Mata', 'collection_point', 'pontos-de-coleta', -0.595, -47.5816,
     'Recebe vidro, plástico e alumínio. Ponto fictício.'],
-  ['Pousada Maré Mansa', 'business', 'pousadas', -0.5867, -47.5755,
+  ['Ponto de Carroças', 'tourist_point', 'carroceiros', -0.599, -47.5866,
+    'Onde as carroças esperam quem chega pelo trapiche. Ponto fictício.'],
+  ['Pousada Maré Mansa', 'business', 'pousadas', -0.5894, -47.5878,
     'Dez quartos com rede na varanda. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0101',
@@ -180,7 +184,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       services: ['café da manhã', 'wi-fi', 'rede na varanda'],
       is_partner: true,
     }],
-  ['Pousada Rede de Areia', 'business', 'pousadas', -0.5901, -47.5684,
+  ['Pousada Rede de Areia', 'business', 'pousadas', -0.5934, -47.5838,
     'Hospedagem simples de frente para o campo. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0102',
@@ -190,7 +194,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       services: ['ventilador', 'estacionamento de bicicleta'],
       is_partner: false,
     }],
-  ['Restaurante Vento Sul', 'business', 'restaurantes', -0.5962, -47.5778,
+  ['Restaurante Vento Sul', 'business', 'restaurantes', -0.5906, -47.587,
     'Peixe frito e camarão no almoço. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0103',
@@ -207,7 +211,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       services: ['peixe frito', 'camarão', 'opção vegetariana'],
       is_partner: true,
     }],
-  ['Lanchonete Caju Verde', 'business', 'lanchonetes', -0.5995, -47.5627,
+  ['Lanchonete Caju Verde', 'business', 'lanchonetes', -0.5926, -47.5876,
     'Açaí, tapioca e suco de cupuaçu. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0104',
@@ -217,7 +221,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       services: ['açaí', 'tapioca', 'suco'],
       is_partner: false,
     }],
-  ['Barraca do Peixe Dourado', 'business', 'barracas', -0.6036, -47.5912,
+  ['Barraca do Peixe Dourado', 'business', 'barracas', -0.594, -47.5884,
     'Barraca de praia com cadeiras e petiscos. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0105',
@@ -227,7 +231,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       services: ['petiscos', 'cadeira e guarda-sol'],
       is_partner: false,
     }],
-  ['Ateliê Linha da Maré', 'business', 'artesanato', -0.6122, -47.5974,
+  ['Ateliê Linha da Maré', 'business', 'artesanato', -0.5896, -47.5848,
     'Peças de palha e crochê feitas na hora. Estabelecimento fictício.',
     {
       whatsapp: '(91) 95555-0106',
