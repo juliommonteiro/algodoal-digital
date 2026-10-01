@@ -26,8 +26,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // woff2 entra no precache: as fontes são auto-hospedadas para o app abrir offline.
-        globPatterns: ['**/*.{js,css,html,woff2}'],
+        // Entram no precache, para o app abrir offline: fontes auto-hospedadas (woff2), o mapa
+        // da ilha (pmtiles, 707 kB) e os glifos e o sprite do estilo do mapa.
+        globPatterns: ['**/*.{js,css,html,woff2,pmtiles}', 'mapa/**/*.{pbf,json,png}'],
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
@@ -36,6 +37,8 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // O worker do MapLibre é um módulo ES (importa código compartilhado): empacota como ES.
+  worker: { format: 'es' },
   server: {
     proxy: { '/api': 'http://localhost:8000' },
   },
@@ -45,6 +48,7 @@ export default defineConfig({
     // real (VITE_USAR_MOCK=false): sem isso, a suíte depende de um backend no ar.
     env: { VITE_USAR_MOCK: 'true' },
     setupFiles: ['./src/test/setup.ts'],
-    css: false,
+    // CSS desligado nos testes, menos o tokens.css: o teste das cores do mapa o lê (?raw).
+    css: { include: [/styles\/tokens\.css/] },
   },
 })

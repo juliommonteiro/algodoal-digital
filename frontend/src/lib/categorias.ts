@@ -26,3 +26,15 @@ export function idsDaArvore(categorias: Categoria[], idRaiz: string): Set<string
 export function porId(categorias: Categoria[]): Map<string, Categoria> {
   return new Map(categorias.map((c) => [c.id, c]))
 }
+
+/** Categoria de primeiro nível de onde `id` descende (a própria, se já for raiz). */
+export function raizDaCategoria(
+  categoriasPorId: Map<string, Categoria>,
+  id: string,
+): Categoria | undefined {
+  let atual = categoriasPorId.get(id)
+  for (let passos = 0; atual?.parent_id && passos < 20; passos++) {
+    atual = categoriasPorId.get(atual.parent_id)
+  }
+  return atual
+}

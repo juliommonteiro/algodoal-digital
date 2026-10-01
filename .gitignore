@@ -19,3 +19,5 @@ dev-dist/
 !.vscode/extensions.json
 .idea/
 .DS_Store
+# Ferramentas baixadas por scripts (ex.: CLI pmtiles)
+.ferramentas/
