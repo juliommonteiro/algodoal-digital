@@ -23,7 +23,13 @@ function ehFalhaDeCarregamento(erro: unknown): boolean {
  * Se o mapa não abrir, avisa no lugar dele em vez de derrubar a tela inteira. Distingue o
  * motivo: sem rede (o código do mapa não veio) ou sem WebGL (o navegador não desenha).
  */
-export class LimiteDoMapa extends Component<{ children: ReactNode }, Estado> {
+interface Props {
+  children: ReactNode
+  /** Para os testes; no app, recarrega a página. */
+  recarregar?: () => void
+}
+
+export class LimiteDoMapa extends Component<Props, Estado> {
   state: Estado = { motivo: null, falhaDeCodigo: false, aindaSemRede: false }
 
   static getDerivedStateFromError(erro: unknown): Partial<Estado> {
@@ -44,7 +50,7 @@ export class LimiteDoMapa extends Component<{ children: ReactNode }, Estado> {
     // O navegador guarda a falha de um import dinâmico: só recarregar a página busca o código
     // de novo. Mas recarregar sem rede, antes de o service worker guardar o app, perderia a
     // tela inteira — então, sem rede, fica o aviso.
-    if (navigator.onLine) window.location.reload()
+    if (navigator.onLine) (this.props.recarregar ?? (() => window.location.reload()))()
     else this.setState({ aindaSemRede: true })
   }
 

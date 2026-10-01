@@ -48,6 +48,7 @@ export default defineConfig({
     // real (VITE_USAR_MOCK=false): sem isso, a suíte depende de um backend no ar.
     env: { VITE_USAR_MOCK: 'true' },
     setupFiles: ['./src/test/setup.ts'],
-    css: false,
+    // CSS desligado nos testes, menos o tokens.css: o teste das cores do mapa o lê (?raw).
+    css: { include: [/styles\/tokens\.css/] },
   },
 })

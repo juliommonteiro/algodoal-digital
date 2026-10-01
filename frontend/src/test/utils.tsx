@@ -26,3 +26,8 @@ export function renderizarEm(caminho: string) {
   render(<RouterProvider router={router} />)
   return router
 }
+
+/** Um arquivo PMTiles mínimo: só a assinatura dos 7 primeiros bytes, que é o que o app confere. */
+export function pmtilesFalso(): ArrayBuffer {
+  return new TextEncoder().encode('PMTiles\u0003 resto do arquivo').buffer as ArrayBuffer
+}
