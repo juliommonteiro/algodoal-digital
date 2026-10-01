@@ -1,8 +1,13 @@
+import { lazy, Suspense } from 'react'
 import { FalhaCarga } from '../components/FalhaCarga'
 import { FiltrosCatalogo } from '../components/FiltrosCatalogo'
+import { LimiteDoMapa } from '../components/mapa/LimiteDoMapa'
 import { ListaLocais } from '../components/ListaLocais'
 import { Carregando } from '../components/ui/Carregando'
 import { filtrarLocais, raizesComLocais, useCatalogo, useFiltrosNaUrl } from '../lib/catalogo'
+
+// MapLibre é pesado: vai num chunk próprio, e as outras telas não esperam por ele.
+const Mapa = lazy(() => import('../components/mapa/Mapa'))
 
 export function MapaPage() {
   const catalogo = useCatalogo()
@@ -27,10 +32,11 @@ export function MapaPage() {
         />
       )}
 
-      <div className="mapa-reservado" role="img" aria-label="Espaço do mapa da ilha, que chega na S6">
-        {/* S6: MapLibre + PMTiles */}
-        <span className="rotulo">Mapa da ilha — chega na S6</span>
-      </div>
+      <LimiteDoMapa>
+        <Suspense fallback={<div className="mapa mapa--carregando" aria-hidden="true" />}>
+          <Mapa />
+        </Suspense>
+      </LimiteDoMapa>
 
       {catalogo.status === 'carregando' && <Carregando rotulo="Carregando locais…" />}
       {catalogo.status === 'erro' && (

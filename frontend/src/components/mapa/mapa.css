@@ -1,0 +1,43 @@
+/* Mapa (S6). Altura parecida com a do protótipo (02-mapa.png): mais da metade da tela. */
+.mapa {
+  position: relative;
+  width: 100%;
+  height: clamp(320px, 55vh, 640px);
+  margin-bottom: var(--e-4);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--mapa-agua);
+}
+
+.mapa--carregando {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 12px, rgb(0 0 0 / 0.025) 12px 24px),
+    var(--superficie);
+}
+
+.mapa--aviso {
+  display: grid;
+  place-items: center;
+  background: var(--superficie);
+}
+
+/* Controles de zoom com alvo de toque de 48px, como o resto do app. */
+.mapa .maplibregl-ctrl-group button {
+  width: var(--toque);
+  height: var(--toque);
+}
+.mapa .maplibregl-ctrl-group button:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}
+
+/* Atribuição (ODbL): legível e sempre aberta. */
+.mapa .maplibregl-ctrl-attrib {
+  font-family: var(--fonte-ui);
+  font-size: 11px;
+  background: rgb(253 252 247 / 0.9);
+}
+.mapa .maplibregl-ctrl-attrib a {
+  color: var(--tinta-2);
+}

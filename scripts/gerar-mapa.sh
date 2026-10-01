@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Gera frontend/public/mapa/algodoal.pmtiles: os tiles vetoriais só da região da ilha.
+# Gera frontend/public/mapa/: os tiles vetoriais só da região da ilha (algodoal.pmtiles) e os
+# glifos e o sprite que o estilo do mapa usa — tudo servido pelo próprio app, para o mapa
+# funcionar offline sem nenhuma requisição a CDN.
 #
 # Por que existe: a política de uso do OpenStreetMap proíbe baixar os tiles oficiais
 # (tile.openstreetmap.org) para uso offline. Então o projeto gera o próprio arquivo, a partir
@@ -62,7 +64,7 @@ tamanho_em_bytes() { wc -c <"$1" | tr -d ' '; }
 
 # ---------------------------------------------------------------------------- 1. CLI pmtiles
 
-passo "1/3 CLI pmtiles v$VERSAO_PMTILES"
+passo "1/4 CLI pmtiles v$VERSAO_PMTILES"
 
 if [[ -x "$PMTILES" ]]; then
   echo "Já existe em $PMTILES"
@@ -106,7 +108,7 @@ fi
 # ---------------------------------------------------------------------------- 2. extração
 
 URL_BUILD="https://build.protomaps.com/${DATA_BUILD}.pmtiles"
-passo "2/3 Extraindo o recorte de $URL_BUILD"
+passo "2/4 Extraindo o recorte de $URL_BUILD"
 
 # O build some depois de ~2 meses. Sem ele, avisa e sugere o mais recente em vez de deixar
 # o pmtiles falhar com uma mensagem genérica.
@@ -130,9 +132,40 @@ rm -f "$PARCIAL"
 "$PMTILES" extract "$URL_BUILD" "$PARCIAL" --bbox="$BBOX" --maxzoom="$MAXZOOM"
 mv -f "$PARCIAL" "$DESTINO"
 
-# ---------------------------------------------------------------------------- 3. resumo
+# ---------------------------------------------------------------------------- 3. glifos e sprite
 
-passo "3/3 Resultado"
+# O estilo da Protomaps (@protomaps/basemaps 5.x, flavor light) escreve os nomes com três fontes
+# e desenha os pontos de interesse com um sprite. Por padrão os dois vêm de um CDN; aqui ficam
+# em public/mapa/ e entram no precache. Só a faixa 0-255 dos glifos: do zoom 10 para cima
+# (o zoom mínimo do mapa), todos os nomes do recorte cabem nela — conferido lendo os tiles.
+# Fontes Noto: SIL OFL. Ícones: derivados de tangrams/icons, MIT.
+ASSETS="https://protomaps.github.io/basemaps-assets"
+FONTES=("Noto Sans Regular" "Noto Sans Medium" "Noto Sans Italic")
+FAIXAS=("0-255")
+PUBLICO_MAPA="$(dirname "$DESTINO")"
+
+passo "3/4 Glifos e sprite do estilo"
+for fonte in "${FONTES[@]}"; do
+  mkdir -p "$PUBLICO_MAPA/glifos/$fonte"
+  for faixa in "${FAIXAS[@]}"; do
+    curl -fsS --retry 3 -o "$PUBLICO_MAPA/glifos/$fonte/$faixa.pbf" \
+      "$ASSETS/fonts/${fonte// /%20}/$faixa.pbf"
+  done
+done
+curl -fsS --retry 3 -o "$PUBLICO_MAPA/glifos/OFL.txt" "$ASSETS/fonts/OFL.txt"
+
+mkdir -p "$PUBLICO_MAPA/sprites"
+for arquivo in light.json light.png light@2x.json light@2x.png; do
+  curl -fsS --retry 3 -o "$PUBLICO_MAPA/sprites/$arquivo" "$ASSETS/sprites/v4/$arquivo"
+done
+curl -fsS --retry 3 -o "$PUBLICO_MAPA/sprites/LICENSE.md" \
+  https://raw.githubusercontent.com/tangrams/icons/master/LICENSE.md
+du -ab "$PUBLICO_MAPA/glifos" "$PUBLICO_MAPA/sprites" | grep -vE '/(glifos|sprites)$' \
+  | sed "s#$RAIZ/##"
+
+# ---------------------------------------------------------------------------- 4. resumo
+
+passo "4/4 Resultado"
 
 BYTES="$(tamanho_em_bytes "$DESTINO")"
 echo "Arquivo: ${DESTINO#"$RAIZ"/}"
