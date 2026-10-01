@@ -87,127 +87,142 @@ CATEGORIAS: list[dict[str, Any]] = [
     },
 ]
 
-# Coordenadas plausíveis para a Ilha de Maiandeua (lat -0.58 a -0.62, lon -47.55 a -47.60),
-# sem corresponder a nenhum lugar real.
+# Coordenadas numa geografia plausível da Ilha de Maiandeua, conferidas contra o arquivo de
+# tiles do app (frontend/public/mapa/algodoal.pmtiles) para nada cair na água:
+# - estabelecimentos, roda de carimbó e mirante na vila (-0.5922, -47.5861), que aparece inteira
+#   no zoom 14 com que o mapa abre;
+# - as praias nas bordas da ilha (norte, sul, leste);
+# - trilhas e ponto de coleta entre a vila e as praias;
+# - o ponto de carroças no começo do trapiche, onde chega o barco de Marudá.
+# Abrindo o mapa (zoom 14, tela de 390x844), 12 dos 16 locais ficam visíveis. Os nomes
+# continuam inventados: são lugares fictícios postos sobre o mapa real.
 PLACES: list[dict[str, Any]] = [
     {
         "name": "Praia do Cajueiro Torto",
         "kind": "beach",
         "category": "praias",
-        "latitude": "-0.585200",
-        "longitude": "-47.561400",
+        "latitude": "-0.579500",
+        "longitude": "-47.579600",
         "description": "Faixa de areia larga, boa para banho na maré baixa. Local fictício.",
     },
     {
         "name": "Praia da Maré Virada",
         "kind": "beach",
         "category": "praias",
-        "latitude": "-0.592700",
-        "longitude": "-47.572300",
+        "latitude": "-0.607600",
+        "longitude": "-47.581950",
         "description": "Mar aberto e vento constante à tarde. Local fictício.",
     },
     {
         "name": "Praia do Sol Deitado",
         "kind": "beach",
         "category": "praias",
-        "latitude": "-0.604100",
-        "longitude": "-47.588900",
+        "latitude": "-0.625000",
+        "longitude": "-47.540600",
         "description": "Trecho tranquilo, sem estrutura. Local fictício.",
     },
     {
         "name": "Trilha do Vento Sul",
         "kind": "trail",
         "category": "trilhas",
-        "latitude": "-0.598300",
-        "longitude": "-47.556800",
+        "latitude": "-0.585500",
+        "longitude": "-47.580500",
         "description": "Cerca de 40 minutos entre o campo e o mangue. Local fictício.",
     },
     {
         "name": "Trilha das Dunas Claras",
         "kind": "trail",
         "category": "trilhas",
-        "latitude": "-0.610500",
-        "longitude": "-47.579200",
+        "latitude": "-0.603800",
+        "longitude": "-47.583000",
         "description": "Percurso curto sobre dunas fixas. Local fictício.",
     },
     {
         "name": "Mirante da Pedra Lisa",
         "kind": "tourist_point",
         "category": "pontos-turisticos",
-        "latitude": "-0.588900",
-        "longitude": "-47.594600",
+        "latitude": "-0.587900",
+        "longitude": "-47.586800",
         "description": "Ponto alto com vista para a foz. Local fictício.",
     },
     {
         "name": "Passeio de Canoa ao Entardecer",
         "kind": "experience",
         "category": "experiencias",
-        "latitude": "-0.601800",
-        "longitude": "-47.566100",
+        "latitude": "-0.596600",
+        "longitude": "-47.584200",
         "description": "Saída de canoa pelo furo, com guia local. Experiência fictícia.",
     },
     {
         "name": "Roda de Carimbó do Terreiro Velho",
         "kind": "culture",
         "category": "cultura-local",
-        "latitude": "-0.594400",
-        "longitude": "-47.583700",
+        "latitude": "-0.591500",
+        "longitude": "-47.585200",
         "description": "Roda aberta aos sábados na praça. Evento fictício.",
     },
     {
         "name": "Ponto de Coleta Boca da Mata",
         "kind": "collection_point",
         "category": "pontos-de-coleta",
-        "latitude": "-0.607300",
-        "longitude": "-47.554900",
+        "latitude": "-0.595000",
+        "longitude": "-47.581600",
         "description": "Recebe vidro, plástico e alumínio. Ponto fictício.",
+    },
+    {
+        "name": "Ponto de Carroças",
+        "kind": "tourist_point",
+        "category": "carroceiros",
+        "latitude": "-0.599000",
+        "longitude": "-47.586600",
+        "description": "Onde as carroças esperam quem chega pelo trapiche. Ponto fictício.",
     },
     {
         "name": "Pousada Maré Mansa",
         "kind": "business",
         "category": "pousadas",
-        "latitude": "-0.586700",
-        "longitude": "-47.575500",
+        "latitude": "-0.589400",
+        "longitude": "-47.587800",
         "description": "Dez quartos com rede na varanda. Estabelecimento fictício.",
     },
     {
         "name": "Pousada Rede de Areia",
         "kind": "business",
         "category": "pousadas",
-        "latitude": "-0.590100",
-        "longitude": "-47.568400",
+        "latitude": "-0.593400",
+        "longitude": "-47.583800",
         "description": "Hospedagem simples de frente para o campo. Estabelecimento fictício.",
     },
     {
         "name": "Restaurante Vento Sul",
         "kind": "business",
         "category": "restaurantes",
-        "latitude": "-0.596200",
-        "longitude": "-47.577800",
+        "latitude": "-0.590600",
+        "longitude": "-47.587000",
         "description": "Peixe frito e camarão no almoço. Estabelecimento fictício.",
     },
     {
         "name": "Lanchonete Caju Verde",
         "kind": "business",
         "category": "lanchonetes",
-        "latitude": "-0.599500",
-        "longitude": "-47.562700",
+        "latitude": "-0.592600",
+        "longitude": "-47.587600",
         "description": "Açaí, tapioca e suco de cupuaçu. Estabelecimento fictício.",
     },
     {
         "name": "Barraca do Peixe Dourado",
         "kind": "business",
         "category": "barracas",
-        "latitude": "-0.603600",
-        "longitude": "-47.591200",
+        "latitude": "-0.594000",
+        "longitude": "-47.588400",
         "description": "Barraca de praia com cadeiras e petiscos. Estabelecimento fictício.",
     },
     {
         "name": "Ateliê Linha da Maré",
         "kind": "business",
         "category": "artesanato",
-        "latitude": "-0.612200",
-        "longitude": "-47.597400",
+        "latitude": "-0.589600",
+        "longitude": "-47.584800",
         "description": "Peças de palha e crochê feitas na hora. Estabelecimento fictício.",
     },
 ]
@@ -456,6 +471,11 @@ def _seed_places(session: Session, categorias: dict[str, Category]) -> dict[str,
             )
             session.add(local)
             session.flush()
+        elif local.source == FICTICIO:
+            # Bancos semeados antes da correção têm as coordenadas antigas, espalhadas e com
+            # local no mar; rodar o seed de novo as acerta. Dado de campo não é tocado.
+            local.latitude = Decimal(definicao["latitude"])
+            local.longitude = Decimal(definicao["longitude"])
         por_nome[local.name] = local
     return por_nome
 
