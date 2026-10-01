@@ -35,3 +35,17 @@ export const TOKEN_DA_COR: Record<keyof typeof COR, string> = {
   mapaVegetacao: '--mapa-vegetacao',
   mapaPraia: '--mapa-praia',
 }
+
+/**
+ * Cor do marcador pela categoria de primeiro nível. Os tokens dão poucos tons bem distintos;
+ * o nome e a categoria também vão no aria-label e no card, então a cor nunca é a única pista.
+ */
+export const COR_DA_CATEGORIA: Record<string, string> = {
+  turismo: COR.verde,
+  alimentacao: COR.terracota,
+  hospedagem: COR.tinta,
+  cultura: COR.areia,
+  preservacao: COR.verdeFundo,
+  servicos: COR.suave,
+}
+export const COR_SEM_CATEGORIA = COR.suave

@@ -27,7 +27,10 @@ export class LimiteDoMapa extends Component<{ children: ReactNode }, Estado> {
       <div className="mapa mapa--aviso" role="status">
         <EstadoVazio
           titulo="Não foi possível abrir o mapa"
-          frase="Este navegador não conseguiu desenhar o mapa. A lista de locais logo abaixo continua funcionando."
+          frase={
+            'Este navegador não conseguiu desenhar o mapa. ' +
+            'A lista de locais logo abaixo continua funcionando.'
+          }
           acao={
             <Botao variante="secundario" onClick={() => this.setState({ erro: false })}>
               Tentar de novo

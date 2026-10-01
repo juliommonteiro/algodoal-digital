@@ -16,12 +16,13 @@ export const CENTRO_DA_VILA: [number, number] = [-47.58609, -0.59219]
 export const ZOOM_INICIAL = 14
 /** Do 10 para cima todos os nomes do recorte cabem nos glifos 0-255 que o app serve. */
 export const ZOOM_MINIMO = 10
-/** Os tiles vão até o 15; acima disso o MapLibre amplia a geometria vetorial sem perder nitidez. */
+/** Os tiles vão até o 15; acima disso o MapLibre amplia a geometria vetorial, sem borrar. */
 export const ZOOM_MAXIMO = 18
 
-/** Exigência da licença ODbL: visível, sem como esconder (ver AttributionControl compact:false). */
+/** Exigência da licença ODbL: visível, sem como esconder (AttributionControl compact:false). */
 export const ATRIBUICAO_OSM =
-  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>'
+  '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">' +
+  '© OpenStreetMap contributors</a>'
 export const CREDITO_PROTOMAPS =
   '<a href="https://protomaps.com" target="_blank" rel="noopener">Protomaps</a>'
 
