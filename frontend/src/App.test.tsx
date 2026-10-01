@@ -121,11 +121,11 @@ describe('diretório', () => {
     expect(screen.getByRole('heading', { name: 'Ponto de Coleta Boca da Mata' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Restaurante Vento Sul' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Pousada Maré Mansa' })).toBeInTheDocument()
-    // Mesmo conteúdo do Mapa: os 15 locais publicados do mock
-    expect(screen.getByRole('heading', { name: '15 locais' })).toBeInTheDocument()
+    // Mesmo conteúdo do Mapa: os 16 locais publicados do mock
+    expect(screen.getByRole('heading', { name: '16 locais' })).toBeInTheDocument()
     // Chips cobrem as categorias sem negócio também
     const grupo = screen.getByRole('radiogroup', { name: 'Filtrar por categoria' })
-    for (const nome of ['Turismo', 'Alimentação', 'Hospedagem', 'Cultura', 'Preservação']) {
+    for (const nome of ['Turismo', 'Alimentação', 'Hospedagem', 'Serviços', 'Cultura', 'Preservação']) {
       expect(within(grupo).getByRole('radio', { name: nome })).toBeInTheDocument()
     }
   })
