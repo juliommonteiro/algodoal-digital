@@ -298,6 +298,11 @@ function banco() {
   return dados
 }
 
+/** Testes: volta aos dados do seed (o painel muda o "banco" do mock). */
+export function reiniciarBancoDoMock(): void {
+  dados = null
+}
+
 /** Para o painel administrativo no modo mock (src/admin/): o mesmo "banco", mutável — o que
  * o admin cria ou remove aparece (ou some) no mapa público. */
 export function bancoDoMock() {

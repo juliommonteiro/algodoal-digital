@@ -11,6 +11,14 @@ export const TURISTA: Usuario = {
   role: 'tourist',
 }
 
+/** Conta de teste do seed (backend/scripts/seed.py). */
+export const ADMIN: Usuario = {
+  id: '00000000-0000-4000-c000-000000000007',
+  name: 'Admin de Teste',
+  email: 'admin@example.com',
+  role: 'admin',
+}
+
 /** Simula uma sessão salva por um login anterior (o que o app acha no localStorage ao abrir). */
 export function simularSessao(usuario: Usuario = TURISTA): SessaoSalva {
   const sessao: SessaoSalva = {
