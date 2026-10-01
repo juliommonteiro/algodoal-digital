@@ -32,7 +32,26 @@ export default defineConfig({
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        // Cache de conteúdo da API e dos tiles entra na S8 (runtimeCaching).
+        runtimeCaching: [
+          {
+            // Catálogo (lista de locais e categorias): os marcadores do mapa e a lista
+            // sobrevivem a uma queda de rede. StaleWhileRevalidate responde do cache na hora e
+            // atualiza em segundo plano quando há conexão — a versão nova aparece na carga
+            // seguinte. Casa só pelo caminho: em produção a API pode estar em outra origem
+            // (VITE_API_URL). Só 200 entra no cache, para um erro não substituir dado bom.
+            //
+            // ATENÇÃO: isto NÃO é a sincronização offline da S8. A S8 continua por fazer:
+            // IndexedDB (Dexie) com o catálogo, pull incremental por `since` e a fila Outbox de
+            // eventos (docs/arquitetura.md). Aqui é só cache HTTP de duas respostas inteiras.
+            urlPattern: ({ url }) => /^\/api\/v1\/(places|categories)$/.test(url.pathname),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'algodoal-catalogo-v1',
+              expiration: { maxEntries: 20, maxAgeSeconds: 7 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
       devOptions: { enabled: false },
     }),
