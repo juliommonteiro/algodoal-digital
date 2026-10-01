@@ -26,8 +26,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // woff2 entra no precache: as fontes são auto-hospedadas para o app abrir offline.
-        globPatterns: ['**/*.{js,css,html,woff2}'],
+        // Entram no precache, para o app abrir offline: fontes auto-hospedadas (woff2), o mapa
+        // da ilha (pmtiles, 707 kB) e os glifos e o sprite do estilo do mapa.
+        globPatterns: ['**/*.{js,css,html,woff2,pmtiles}', 'mapa/**/*.{pbf,json,png}'],
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],

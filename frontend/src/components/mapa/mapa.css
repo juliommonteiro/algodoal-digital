@@ -134,3 +134,10 @@
   cursor: pointer;
   border-radius: var(--r-botao);
 }
+
+.mapa__detalhe {
+  margin-top: var(--e-2);
+  font-size: 14px;
+  color: var(--terracota);
+  font-weight: 500;
+}

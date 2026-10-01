@@ -3,7 +3,8 @@ import { addProtocol, setWorkerUrl } from 'maplibre-gl'
 // build não inclui o worker e os tiles nunca são desenhados. `?worker&url` faz o Vite empacotar
 // o worker (com o código que ele importa) num chunk próprio e devolver o endereço.
 import urlDoWorker from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { Protocol } from 'pmtiles'
+import { PMTiles, Protocol } from 'pmtiles'
+import { FonteEmMemoria } from './arquivo'
 
 let protocolo: Protocol | null = null
 
@@ -18,4 +19,12 @@ export function protocoloPmtiles(): Protocol {
     addProtocol('pmtiles', protocolo.tile)
   }
   return protocolo
+}
+
+/** Registra o arquivo em memória no protocolo (uma vez por chave). */
+export function registrarArquivo(chave: string, dados: ArrayBuffer): void {
+  const protocolo = protocoloPmtiles()
+  if (!protocolo.get(`pmtiles://${chave}`)) {
+    protocolo.add(new PMTiles(new FonteEmMemoria(chave, dados)))
+  }
 }
