@@ -1,13 +1,14 @@
 import { layers, namedFlavor } from '@protomaps/basemaps'
 import type { LngLatBoundsLike, MapOptions } from 'maplibre-gl'
+import { LESTE, NORTE, OESTE, SUL } from '../../lib/areaDoMapa'
 import { COR } from './cores'
 
 type Estilo = Exclude<MapOptions['style'], string | undefined>
 
 /** Recorte do arquivo de tiles (scripts/gerar-mapa.sh): da ilha até Marudá. */
 export const LIMITES: LngLatBoundsLike = [
-  [-47.68, -0.66],
-  [-47.51, -0.56],
+  [OESTE, SUL],
+  [LESTE, NORTE],
 ]
 
 /** "Algodoal" (place, kind=locality) no próprio arquivo de tiles. [lng, lat] */

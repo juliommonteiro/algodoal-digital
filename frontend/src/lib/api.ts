@@ -17,12 +17,15 @@ export const SEM_REDE = 0
 export class ErroApi extends Error {
   readonly status: number
   readonly mensagem: string
+  /** Erros de validação por campo (422), ex.: { latitude: "Fora da área do mapa…" }. */
+  readonly campos: Record<string, string>
 
-  constructor(status: number, mensagem: string) {
+  constructor(status: number, mensagem: string, campos: Record<string, string> = {}) {
     super(mensagem)
     this.name = 'ErroApi'
     this.status = status
     this.mensagem = mensagem
+    this.campos = campos
   }
 
   get semRede(): boolean {
@@ -51,23 +54,44 @@ const MENSAGENS_PADRAO: Record<number, string> = {
   429: 'Muitas tentativas. Espere um pouco e tente de novo.',
 }
 
-async function mensagemDoErro(resposta: Response): Promise<string> {
+/** Erro de validação do FastAPI: loc ["body", "business", "whatsapp"] vira "business.whatsapp". */
+function camposDoErro(detail: unknown[]): Record<string, string> {
+  const campos: Record<string, string> = {}
+  for (const item of detail) {
+    const { loc, msg } = (item ?? {}) as { loc?: unknown; msg?: unknown }
+    if (!Array.isArray(loc) || typeof msg !== 'string') continue
+    const caminho = (loc[0] === 'body' ? loc.slice(1) : loc).join('.')
+    if (caminho && !(caminho in campos)) campos[caminho] = msg
+  }
+  return campos
+}
+
+async function erroDaResposta(resposta: Response): Promise<ErroApi> {
   try {
     const corpo: unknown = await resposta.json()
-    // FastAPI: {"detail": "texto"} ou {"detail": [{"msg": "..."}]} na validação.
+    // FastAPI: {"detail": "texto"} ou {"detail": [{"loc": [...], "msg": "..."}]} na validação.
     if (corpo && typeof corpo === 'object' && 'detail' in corpo) {
       const { detail } = corpo as { detail: unknown }
-      if (typeof detail === 'string') return detail
-      if (Array.isArray(detail) && typeof detail[0]?.msg === 'string') return detail[0].msg
+      if (typeof detail === 'string') return new ErroApi(resposta.status, detail)
+      if (Array.isArray(detail) && typeof detail[0]?.msg === 'string') {
+        return new ErroApi(resposta.status, detail[0].msg, camposDoErro(detail))
+      }
     }
   } catch {
     // corpo vazio ou não-JSON: cai na mensagem padrão
   }
-  if (resposta.status >= 500) return 'O servidor está com problema. Tente de novo em instantes.'
-  return MENSAGENS_PADRAO[resposta.status] ?? `Erro ${resposta.status}.`
+  const mensagem =
+    resposta.status >= 500
+      ? 'O servidor está com problema. Tente de novo em instantes.'
+      : (MENSAGENS_PADRAO[resposta.status] ?? `Erro ${resposta.status}.`)
+  return new ErroApi(resposta.status, mensagem)
 }
 
-async function requisitar<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: unknown): Promise<T> {
+export async function requisitar<T>(
+  metodo: 'GET' | 'POST' | 'PATCH' | 'DELETE',
+  caminho: string,
+  corpo?: unknown,
+): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (corpo !== undefined) headers['Content-Type'] = 'application/json'
   if (tokenAcesso) headers.Authorization = `Bearer ${tokenAcesso}`
@@ -83,7 +107,7 @@ async function requisitar<T>(metodo: 'GET' | 'POST', caminho: string, corpo?: un
     throw new ErroApi(SEM_REDE, 'Sem conexão com o servidor. Verifique a internet e tente de novo.')
   }
 
-  if (!resposta.ok) throw new ErroApi(resposta.status, await mensagemDoErro(resposta))
+  if (!resposta.ok) throw await erroDaResposta(resposta)
 
   try {
     return (await resposta.json()) as T

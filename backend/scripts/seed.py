@@ -13,12 +13,15 @@ são inventados. Os dados reais entram depois da validação em campo, com sourc
 from __future__ import annotations
 
 import argparse
+import sys
 from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
+from app.core.security import gerar_hash, verificar_senha
 from app.db.session import SessionLocal
 from app.models import Business, Carrier, Category, Place, PlacePhoto, User
 
@@ -334,6 +337,29 @@ USERS: list[dict[str, Any]] = [
     },
 ]
 
+# Contas para entrar no app em desenvolvimento (README, "Contas de teste"). Todas com a mesma
+# senha. Os demais usuários fictícios seguem sem senha, portanto sem login.
+SENHA_DE_TESTE = "algodoal-teste"
+CONTAS_DE_TESTE: list[dict[str, Any]] = [
+    {"name": "Admin de Teste", "email": "admin@example.com", "role": "admin"},
+    {"name": "Turista de Teste", "email": "turista@example.com", "role": "tourist"},
+    {"name": "Carroceiro de Teste", "email": "carroceiro@example.com", "role": "carrier"},
+]
+
+
+class SeedEmProducao(RuntimeError):
+    """O seed cria dados fictícios e contas com senha conhecida: nunca em produção."""
+
+
+def garantir_que_nao_e_producao() -> None:
+    if get_settings().environment == "production":
+        raise SeedEmProducao(
+            "O seed não roda com ENVIRONMENT=production: ele cria locais e usuários fictícios e "
+            f"contas de teste com a senha conhecida {SENHA_DE_TESTE!r} (inclusive um admin). "
+            "Para dados reais, use a importação da planilha de campo."
+        )
+
+
 # Cada carroceiro tem seu próprio user. O primeiro reaproveita o user de perfil 'carrier'.
 CARRIERS: list[dict[str, Any]] = [
     {
@@ -454,6 +480,24 @@ def _seed_users(session: Session) -> dict[str, User]:
     return por_email
 
 
+def _seed_contas_de_teste(session: Session) -> None:
+    for definicao in CONTAS_DE_TESTE:
+        usuario = session.scalar(select(User).where(User.email == definicao["email"]))
+        if usuario is None:
+            usuario = User(name=definicao["name"], email=definicao["email"])
+            session.add(usuario)
+        usuario.role = definicao["role"]
+        usuario.is_active = True
+        # Só regrava a senha se faltar ou não conferir: o Argon2 gera um hash diferente a cada
+        # vez, e regravar sempre faria o seed mudar dados a cada execução.
+        if (
+            usuario.password_hash is None
+            or not verificar_senha(SENHA_DE_TESTE, usuario.password_hash)[0]
+        ):
+            usuario.password_hash = gerar_hash(SENHA_DE_TESTE)
+    session.flush()
+
+
 def _seed_places(session: Session, categorias: dict[str, Category]) -> dict[str, Place]:
     por_nome: dict[str, Place] = {}
     for definicao in PLACES:
@@ -553,11 +597,14 @@ def contagens(session: Session) -> dict[str, int]:
 
 
 def seed(session: Session, reset: bool = False) -> dict[str, int]:
-    """Insere o que faltar e devolve a contagem por tabela. Chamar duas vezes não duplica."""
+    """Insere o que faltar e devolve a contagem por tabela. Chamar duas vezes não duplica.
+    Recusa rodar em produção (SeedEmProducao) antes de qualquer escrita."""
+    garantir_que_nao_e_producao()
     if reset:
         reset_ficticios(session)
     categorias = _seed_categories(session)
     usuarios = _seed_users(session)
+    _seed_contas_de_teste(session)
     locais = _seed_places(session, categorias)
     _seed_place_photos(session, locais)
     _seed_businesses(session, locais, usuarios)
@@ -586,6 +633,10 @@ def _imprime_resumo(resumo: dict[str, int], reset: bool) -> None:
         print("!!  " + linha.ljust(largura - 8) + "  !!")
     print("!" * largura)
     print()
+    print(f"Contas de teste (senha {SENHA_DE_TESTE!r}):")
+    for conta in CONTAS_DE_TESTE:
+        print(f"  {conta['email']:<26} {conta['role']}")
+    print()
 
 
 def main() -> None:
@@ -596,6 +647,12 @@ def main() -> None:
         help="apaga as linhas com source='ficticio' antes de inserir",
     )
     args = parser.parse_args()
+
+    try:
+        garantir_que_nao_e_producao()
+    except SeedEmProducao as erro:
+        print(f"ERRO: {erro}", file=sys.stderr)
+        sys.exit(1)
 
     with SessionLocal() as session:
         resumo = seed(session, reset=args.reset)

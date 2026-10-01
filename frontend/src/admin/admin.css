@@ -1,0 +1,365 @@
+/*
+ * Painel administrativo (docs/prototipo/13-painel-admin.png). Desktop primeiro: barra lateral
+ * fixa e tabela larga; em tela estreita a barra vira faixa no topo e a tabela rola de lado.
+ * Vai no chunk do painel (importado por PainelAdmin.tsx), depois do CSS do app.
+ */
+
+.admin {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--fundo);
+}
+
+/* ---------- Barra lateral ---------- */
+.admin__lateral {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-4);
+  height: 100dvh;
+  padding: var(--e-6) var(--e-3);
+  border-right: 1px solid var(--borda);
+  background: var(--fundo);
+}
+
+.admin__marca {
+  padding: 0 var(--e-3);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.admin__menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e-2);
+  min-height: 40px;
+  padding: var(--e-2) var(--e-3);
+  border-radius: var(--r-botao);
+  color: var(--tinta-2);
+  font-size: 15px;
+  text-decoration: none;
+}
+.admin__item--ativo {
+  background: var(--superficie);
+  color: var(--tinta);
+  font-weight: 700;
+}
+.admin__item--off {
+  color: var(--suave);
+  cursor: not-allowed;
+}
+.admin__quando {
+  font-family: var(--fonte-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.admin__rodape {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  margin-top: auto;
+  padding: 0 var(--e-3);
+  font-size: 14px;
+}
+.admin__quem {
+  color: var(--suave);
+  overflow-wrap: anywhere;
+}
+.admin__voltar {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+/* ---------- Conteúdo ---------- */
+.admin__conteudo {
+  min-width: 0;
+  margin: var(--e-4);
+  padding: var(--e-8) var(--e-7);
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  background: var(--superficie);
+}
+
+.admin__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e-4);
+  margin-bottom: var(--e-5);
+}
+.admin__cabecalho h1 {
+  font-size: 28px;
+  line-height: 1.2;
+}
+.admin__intro {
+  margin-top: var(--e-1);
+  color: var(--tinta-2);
+}
+.admin__migalha {
+  display: inline-block;
+  margin-bottom: var(--e-2);
+  color: var(--verde);
+  font-weight: 600;
+}
+
+/* ---------- Avisos ---------- */
+.admin-aviso__lugar:empty {
+  display: none;
+}
+.admin-aviso {
+  margin-bottom: var(--e-4);
+  padding: var(--e-3) var(--e-4);
+  border-left: 4px solid;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.admin-aviso--sucesso {
+  border-color: var(--verde);
+  background: color-mix(in oklab, var(--verde) 10%, var(--superficie));
+}
+.admin-aviso--erro {
+  border-color: var(--terracota);
+  background: color-mix(in oklab, var(--terracota) 10%, var(--superficie));
+}
+
+/* ---------- Filtros ---------- */
+.admin-filtros {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2fr) repeat(3, minmax(9rem, 1fr));
+  gap: var(--e-3);
+  margin-bottom: var(--e-5);
+}
+
+/* ---------- Tabela ---------- */
+.admin-tabela__rolagem {
+  overflow-x: auto;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+.admin-tabela {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.admin-tabela thead th {
+  padding: var(--e-3) var(--e-4);
+  background: var(--fundo);
+  color: var(--suave);
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.admin-tabela tbody th,
+.admin-tabela td {
+  padding: var(--e-3) var(--e-4);
+  border-top: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: middle;
+}
+.admin-tabela tbody th {
+  font-weight: 600;
+}
+.admin-tabela__nome {
+  color: var(--tinta);
+  text-decoration: none;
+}
+.admin-tabela__nome:hover {
+  color: var(--verde);
+  text-decoration: underline;
+}
+.admin-tabela__acoes {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--e-2);
+  white-space: nowrap;
+}
+/* Removido: esmaecido, mas a ação de restaurar continua com contraste cheio. */
+.admin-tabela__removido th,
+.admin-tabela__removido td:not(:last-child) {
+  opacity: 0.5;
+}
+.admin-tabela__removido .admin-tabela__nome {
+  text-decoration: line-through;
+}
+
+.admin-status {
+  display: inline-block;
+  padding: 2px var(--e-3);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-status--publicado {
+  background: color-mix(in oklab, var(--verde) 14%, var(--superficie));
+  color: var(--verde-fundo);
+}
+.admin-status--rascunho {
+  background: color-mix(in oklab, var(--areia) 45%, var(--superficie));
+  color: var(--terracota);
+}
+.admin-status--removido {
+  background: var(--fundo);
+  color: var(--tinta-2);
+}
+
+/* ---------- Botões menores, para a tabela ---------- */
+.botao--pequeno {
+  min-height: 36px;
+  padding: var(--e-1) var(--e-3);
+  font-size: 14px;
+}
+.botao--perigo {
+  color: var(--terracota);
+  border-color: var(--terracota);
+}
+
+/* ---------- Formulário ---------- */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-6);
+  max-width: 52rem;
+}
+.admin-form__secao {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e-4);
+  margin: 0;
+  padding: var(--e-5);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+.admin-form__secao legend {
+  padding: 0 var(--e-2);
+  font-size: 17px;
+  font-weight: 700;
+}
+.admin-form__largo {
+  grid-column: 1 / -1;
+}
+.admin-form__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3);
+}
+
+.campo__input--area {
+  min-height: 6rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.campo__dica {
+  color: var(--suave);
+  font-size: 14px;
+}
+
+.caixa {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--e-3);
+  row-gap: var(--e-1);
+}
+.caixa__input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--verde);
+}
+.caixa__rotulo {
+  font-weight: 500;
+}
+.caixa .campo__dica,
+.caixa .campo__erro {
+  grid-column: 2;
+}
+
+.admin-horarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+}
+.admin-horarios__dias {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--e-3);
+}
+
+.admin-removido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  margin-bottom: var(--e-5);
+  padding: var(--e-3) var(--e-4);
+  border: 1px dashed var(--borda);
+  border-radius: 8px;
+  color: var(--tinta-2);
+}
+
+/* ---------- Tela estreita: não quebra, só se rearruma ---------- */
+@media (max-width: 52rem) {
+  .admin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin__lateral {
+    position: static;
+    height: auto;
+    padding: var(--e-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--borda);
+  }
+  .admin__menu {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin__item {
+    white-space: nowrap;
+  }
+  .admin__rodape {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0;
+  }
+  .admin__conteudo {
+    margin: 0;
+    padding: var(--e-5) var(--e-4);
+    border: 0;
+    border-radius: 0;
+  }
+  .admin-filtros {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .admin-filtros__busca {
+    grid-column: 1 / -1;
+  }
+  .admin-form__secao {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--e-4);
+  }
+}

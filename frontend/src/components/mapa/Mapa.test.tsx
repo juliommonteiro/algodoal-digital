@@ -11,7 +11,7 @@ beforeEach(() => {
 
 async function abrirMapa(): Promise<MapaFalso> {
   renderizarEm('/')
-  await waitFor(() => expect(document.querySelectorAll('.marcador')).toHaveLength(15))
+  await waitFor(() => expect(document.querySelectorAll('.marcador')).toHaveLength(16))
   return mapasCriados.at(-1)!
 }
 
@@ -62,7 +62,7 @@ describe('mapa', () => {
     expect(marcadores()).toHaveLength(7)
 
     fireEvent.click(within(grupo).getByRole('radio', { name: 'Todas' }))
-    expect(marcadores()).toHaveLength(15)
+    expect(marcadores()).toHaveLength(16)
     expect(chamadas).toHaveBeenCalledTimes(1) // só a carga inicial
   })
 
