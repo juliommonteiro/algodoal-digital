@@ -1,7 +1,7 @@
 import { Marker, type Map as MapaLibre } from 'maplibre-gl'
 import { porId, raizDaCategoria } from '../../lib/categorias'
 import type { Categoria, Local, TipoLocal } from '../../lib/tipos'
-import { COR } from './cores'
+import { classeDoGrupo } from './cores'
 import { CAMINHOS_DO_TIPO, TIPOS } from './icones'
 
 function duracao(): number {
@@ -65,13 +65,13 @@ export function criarMarcadores(
     elemento.dataset.categoria = raiz?.slug ?? ''
     elemento.dataset.tipo = local.kind
     elemento.dataset.grupo = tipo?.grupo ?? ''
-    elemento.style.setProperty('--cor-marcador', tipo?.cor ?? COR.suave)
     elemento.setAttribute(
       'aria-label',
       [local.name, tipo?.rotulo.toLocaleLowerCase('pt-BR')].filter(Boolean).join(', '),
     )
     const pino = document.createElement('span')
-    pino.className = 'marcador__pino'
+    // A cor vem da classe do grupo (mapa.css); sem tipo conhecido, fica a cor neutra.
+    pino.className = tipo ? `marcador__pino ${classeDoGrupo(tipo.grupo)}` : 'marcador__pino'
     pino.append(iconeDoTipo(local.kind))
     elemento.append(pino)
     elemento.setAttribute('aria-pressed', 'false')

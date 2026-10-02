@@ -36,6 +36,11 @@ export const ID_DA_FONTE = 'algodoal'
  */
 export function montarEstilo(urlDaFonte: string, origem = window.location.origin): Estilo {
   const base = namedFlavor('light')
+  // Exceção à regra "cor só no tokens.css": estes COR.* (fundo, superficie, borda, mapaAgua,
+  // mapaVegetacao, mapaPraia, em cores.ts) espelham os tokens de propósito. O estilo do MapLibre
+  // é JSON e não lê variável CSS — por isso também usa o hex de fallback, nunca a versão OKLCH.
+  // Não tente unificar: mudou o token, atualize cores.ts junto (cores.test.ts acusa diferença).
+  // Ver docs/estrutura.md, "Constantes compartilhadas › Cores".
   const sabor = {
     ...base,
     background: COR.fundo,

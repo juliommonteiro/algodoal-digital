@@ -23,6 +23,12 @@ services:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
+      # Só leitura, para o teste de consistência da bbox (backend/tests/test_area_do_mapa.py)
+      # rodar também aqui no container. Só serve para rodar localmente: no CI o pytest roda
+      # direto no runner, com o checkout inteiro. Mesmos caminhos relativos à raiz do
+      # repositório. Sai quando a bbox tiver fonte única (#50).
+      - ./frontend/src/lib:/frontend/src/lib:ro
+      - ./scripts:/scripts:ro
     depends_on:
       db:
         condition: service_healthy

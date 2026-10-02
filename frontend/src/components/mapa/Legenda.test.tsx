@@ -30,6 +30,18 @@ describe('legenda do mapa', () => {
           .map((item) => item.textContent),
       ]),
     )
+    // O quadradinho de cada tipo usa a mesma classe de grupo do pino no mapa.
+    const classesDosPinos = grupos.map((lista) =>
+      [...lista.querySelectorAll('.legenda__pino')].map((pino) =>
+        [...pino.classList].find((c) => c.startsWith('pino--')),
+      ),
+    )
+    expect(classesDosPinos).toEqual([
+      ['pino--explorar', 'pino--explorar', 'pino--explorar'],
+      ['pino--economia', 'pino--economia'],
+      ['pino--ambiental'],
+      ['pino--cultura'],
+    ])
     expect(porGrupo).toEqual({
       Explorar: ['Praia', 'Trilha', 'Ponto turístico'],
       'Economia local': ['Estabelecimento', 'Experiência'],

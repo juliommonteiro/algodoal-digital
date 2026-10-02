@@ -1,5 +1,6 @@
-import { useId, useRef, useState, type CSSProperties } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { TipoLocal } from '../../lib/tipos'
+import { classeDoGrupo } from './cores'
 import { GRUPOS, TIPOS, type GrupoDoTipo } from './icones'
 
 const TIPOS_DO_GRUPO = Object.entries(TIPOS) as [TipoLocal, (typeof TIPOS)[TipoLocal]][]
@@ -36,7 +37,7 @@ export function Legenda() {
       </button>
       <div id={idConteudo} className="legenda__conteudo" hidden={!aberta}>
         {(Object.entries(GRUPOS) as [GrupoDoTipo, (typeof GRUPOS)[GrupoDoTipo]][]).map(
-          ([grupo, { rotulo, cor }]) => (
+          ([grupo, { rotulo }]) => (
             <div key={grupo} className="legenda__grupo">
               <p className="legenda__titulo" id={`${idConteudo}-${grupo}`}>
                 {rotulo}
@@ -45,10 +46,7 @@ export function Legenda() {
                 {TIPOS_DO_GRUPO.filter(([, dados]) => dados.grupo === grupo).map(
                   ([tipo, { icone: Icone, rotulo: rotuloDoTipo }]) => (
                     <li key={tipo} className="legenda__tipo">
-                      <span
-                        className="legenda__pino"
-                        style={{ '--cor-marcador': cor } as CSSProperties}
-                      >
+                      <span className={`legenda__pino ${classeDoGrupo(grupo)}`}>
                         <Icone width={14} height={14} />
                       </span>
                       {rotuloDoTipo}
