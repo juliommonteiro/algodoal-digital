@@ -20,12 +20,24 @@ class MapaFalso {
   constructor(opcoes: Record<string, unknown> & { container: HTMLElement }) {
     this.opcoes = opcoes
     this.container = opcoes.container
+    if (typeof opcoes.zoom === 'number') this.zoom = opcoes.zoom
     mapasCriados.push(this)
   }
 
   on(evento: string, ouvinte: Ouvinte) {
     ;(this.ouvintes[evento] ??= []).push(ouvinte)
     return this
+  }
+
+  off(evento: string, ouvinte: Ouvinte) {
+    this.ouvintes[evento] = (this.ouvintes[evento] ?? []).filter((o) => o !== ouvinte)
+    return this
+  }
+
+  /** Zoom atual: o das opções, até um teste mudar (e disparar 'zoom'). */
+  zoom = 14
+  getZoom() {
+    return this.zoom
   }
 
   addControl(controle: unknown, posicao?: string) {
