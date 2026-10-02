@@ -1,9 +1,10 @@
 /**
  * Cores do mapa e dos marcadores. São os valores hex de src/styles/tokens.css (o fallback de
- * cada token) — o MapLibre precisa da cor concreta e não lê variável CSS. O teste
- * cores.test.ts compara com o tokens.css: mudou lá, este arquivo acusa.
+ * cada token) — o MapLibre precisa da cor concreta e não lê variável CSS, e o pino recebe a cor
+ * como estilo em linha. O teste cores.test.ts compara com o tokens.css (seguindo os apelidos
+ * em var()): mudou lá, este arquivo acusa.
  */
-export const COR = {
+const BASE = {
   fundo: '#f1efe6',
   superficie: '#fdfcf7',
   borda: '#dad8cd',
@@ -19,8 +20,13 @@ export const COR = {
   mapaPraia: '#eee4cb',
   mar: '#1b6c8c',
   sol: '#9a6a17',
-  mangue: '#15493a',
-  terra: '#a8543a',
+} as const
+
+export const COR = {
+  ...BASE,
+  // Apelidos, como no tokens.css: o grupo do mapa com a cor de um token que já existia.
+  mangue: BASE.verdeFundo,
+  terra: BASE.terracota,
 } as const
 
 /** Nome da variável CSS de cada cor, para o teste de sincronia. */

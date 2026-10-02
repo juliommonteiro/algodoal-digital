@@ -66,17 +66,24 @@ describe('ícones dos tipos de local', () => {
     expect(COR).toMatchObject({
       mar: '#1b6c8c',
       sol: '#9a6a17',
-      mangue: '#15493a',
-      terra: '#a8543a',
+      // apelidos de tokens que já existiam
+      mangue: COR.verdeFundo,
+      terra: COR.terracota,
     })
+    expect([COR.verdeFundo, COR.terracota]).toEqual(['#004f38', '#a04f27'])
   })
 
-  it.each(Object.entries(GRUPOS))(
-    'o ícone branco sobre o grupo %s tem contraste de 4,5:1 ou mais',
-    (_, { cor }) => {
-      expect(contraste('#ffffff', cor)).toBeGreaterThanOrEqual(4.5)
-    },
-  )
+  it('o ícone branco sobre cada cor de grupo tem contraste de 4,5:1 ou mais', () => {
+    const contrastes = Object.fromEntries(
+      Object.entries(GRUPOS).map(([grupo, { cor }]) => [
+        grupo,
+        Math.round(contraste('#ffffff', cor) * 10) / 10,
+      ]),
+    )
+    // mar 5,9; sol 4,7; mangue = verde-fundo 9,7; terra = terracota 5,8
+    expect(contrastes).toEqual({ explorar: 5.9, economia: 4.7, ambiental: 9.7, cultura: 5.8 })
+    for (const valor of Object.values(contrastes)) expect(valor).toBeGreaterThanOrEqual(4.5)
+  })
 
   it('os sete SVGs juntos têm no máximo 4 kB (antes do gzip)', () => {
     const marcacao = SETE_TIPOS.map((tipo) => {
