@@ -31,6 +31,11 @@
   --mangue: #15493a; /* ambiental: ponto de coleta */
   --terra: #a8543a; /* cultura */
 
+  /* "Você está aqui" (S7): fora da paleta da marca de propósito. A bolinha azul é convenção
+     de todo app de mapa e não pode se confundir com os pinos dos locais. Contra os
+     preenchimentos do mapa: 3.4:1 a 4.2:1, mais o anel branco. */
+  --mapa-eu: #2d6cdf;
+
   /* Raios */
   --r-chip: 20px;
   --r-botao: 10px;
@@ -75,5 +80,6 @@
     --sol: oklch(0.561 0.11 75.1);
     --mangue: oklch(0.366 0.061 170.3);
     --terra: oklch(0.543 0.117 37.9);
+    --mapa-eu: oklch(0.557 0.187 261.2);
   }
 }

@@ -8,6 +8,11 @@ export const SUL = -0.66
 export const LESTE = -47.51
 export const NORTE = -0.56
 
+/** Dentro do recorte, borda inclusive (a mesma regra da API para os locais). */
+export function dentroDaArea(longitude: number, latitude: number): boolean {
+  return longitude >= OESTE && longitude <= LESTE && latitude >= SUL && latitude <= NORTE
+}
+
 const br = (n: number) => n.toFixed(2).replace('.', ',')
 
 export function erroDeLatitude(latitude: number): string | null {

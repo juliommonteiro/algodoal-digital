@@ -66,6 +66,20 @@ const CAMINHOS = {
       <path d="m21 17-5-5-9 7" />
     </>
   ),
+  // Localização: mira; riscada quando o navegador não deixa usar.
+  mira: (
+    <>
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+    </>
+  ),
+  miraBloqueada: (
+    <>
+      <circle cx="12" cy="12" r="7" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l14 14" />
+    </>
+  ),
   bussola: (
     <>
       <circle cx="12" cy="12" r="9" />

@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { clienteMock } from '../../lib/mock'
 import { mapasCriados, type MapaFalso } from '../../test/maplibre-falso'
@@ -140,6 +140,39 @@ describe('mapa', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Alimentação' }))
 
     expect(screen.queryByRole('link', { name: 'Ver detalhes' })).not.toBeInTheDocument()
+  })
+
+  it('sair da tela do mapa com a localização ligada encerra o acompanhamento', async () => {
+    const gps = {
+      getCurrentPosition: vi.fn((ok: (p: GeolocationPosition) => void) =>
+        ok({
+          coords: { longitude: -47.58609, latitude: -0.59219, accuracy: 15 },
+        } as GeolocationPosition),
+      ),
+      watchPosition: vi.fn(() => 3),
+      clearWatch: vi.fn(),
+    }
+    Object.defineProperty(navigator, 'geolocation', { value: gps, configurable: true })
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true })
+    try {
+      const mapa = await abrirMapa()
+      expect(gps.getCurrentPosition).not.toHaveBeenCalled() // nada ao abrir
+
+      fireEvent.click(screen.getByRole('button', { name: 'Mostrar minha localização' }))
+      expect(mapa.easeTo).toHaveBeenCalledWith(expect.objectContaining({ zoom: 15 }))
+      expect(gps.watchPosition).toHaveBeenCalledTimes(1)
+
+      fireEvent.click(screen.getByRole('link', { name: 'Diretório' }))
+
+      expect(await screen.findByRole('heading', { name: 'Diretório', level: 1 })).toBeInTheDocument()
+      expect(gps.clearWatch).toHaveBeenCalledWith(3)
+    } finally {
+      cleanup()
+      // @ts-expect-error -- some com o que o teste instalou
+      delete navigator.geolocation
+      // @ts-expect-error -- idem
+      delete window.isSecureContext
+    }
   })
 
   it('sem o arquivo (primeiro acesso sem rede) explica e deixa tentar de novo', async () => {
