@@ -1,7 +1,8 @@
 import { Marker, type Map as MapaLibre } from 'maplibre-gl'
 import { porId, raizDaCategoria } from '../../lib/categorias'
-import type { Categoria, Local } from '../../lib/tipos'
-import { COR_DA_CATEGORIA, COR_SEM_CATEGORIA } from './cores'
+import type { Categoria, Local, TipoLocal } from '../../lib/tipos'
+import { COR } from './cores'
+import { CAMINHOS_DO_TIPO, TIPOS } from './icones'
 
 function duracao(): number {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 300
@@ -13,9 +14,38 @@ export interface MarcadorNoMapa {
   marker: Marker
 }
 
+const SVG = 'http://www.w3.org/2000/svg'
+
 /**
- * Um <button> por local: 48x48 de alvo de toque, um ponto de 18px no centro, nome e categoria
- * no aria-label — dá para chegar com Tab e o leitor de tela anuncia o que é.
+ * O ícone do tipo como SVG de DOM (o marcador vive fora do React): os mesmos traços do
+ * componente da legenda (icones.tsx), em currentColor — branco, pelo CSS do pino.
+ */
+function iconeDoTipo(tipo: TipoLocal): SVGSVGElement {
+  const svg = document.createElementNS(SVG, 'svg')
+  for (const [atributo, valor] of Object.entries({
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '2',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+    focusable: 'false',
+  })) {
+    svg.setAttribute(atributo, valor)
+  }
+  for (const d of CAMINHOS_DO_TIPO[tipo] ?? []) {
+    const caminho = document.createElementNS(SVG, 'path')
+    caminho.setAttribute('d', d)
+    svg.append(caminho)
+  }
+  return svg
+}
+
+/**
+ * Um <button> por local: 48x48 de alvo de toque e, no centro, um pino de 32px na cor do grupo
+ * do tipo, com o ícone branco. No aria-label, nome e tipo ("Praia do Sol Deitado, praia"): a
+ * cor nunca é a única pista. Sendo <button>, chega-se com Tab e abre com Enter ou espaço.
  */
 export function criarMarcadores(
   mapa: MapaLibre,
@@ -25,18 +55,25 @@ export function criarMarcadores(
 ): MarcadorNoMapa[] {
   const categoriaPorId = porId(categorias)
   return locais.map((local) => {
-    const categoria = categoriaPorId.get(local.category_id)
     const raiz = raizDaCategoria(categoriaPorId, local.category_id)
+    // Tipo desconhecido (API mais nova que o app): pino neutro, sem ícone, em vez de quebrar o mapa.
+    const tipo = TIPOS[local.kind] as (typeof TIPOS)[TipoLocal] | undefined
     const elemento = document.createElement('button')
     elemento.type = 'button'
     elemento.className = 'marcador'
     elemento.dataset.localId = local.id
     elemento.dataset.categoria = raiz?.slug ?? ''
-    elemento.style.setProperty(
-      '--cor-marcador',
-      (raiz && COR_DA_CATEGORIA[raiz.slug]) ?? COR_SEM_CATEGORIA,
+    elemento.dataset.tipo = local.kind
+    elemento.dataset.grupo = tipo?.grupo ?? ''
+    elemento.style.setProperty('--cor-marcador', tipo?.cor ?? COR.suave)
+    elemento.setAttribute(
+      'aria-label',
+      [local.name, tipo?.rotulo.toLocaleLowerCase('pt-BR')].filter(Boolean).join(', '),
     )
-    elemento.setAttribute('aria-label', [local.name, categoria?.name].filter(Boolean).join(', '))
+    const pino = document.createElement('span')
+    pino.className = 'marcador__pino'
+    pino.append(iconeDoTipo(local.kind))
+    elemento.append(pino)
     elemento.setAttribute('aria-pressed', 'false')
     elemento.addEventListener('click', (evento) => {
       evento.stopPropagation() // não deixa o clique chegar ao mapa (que fecharia o card)

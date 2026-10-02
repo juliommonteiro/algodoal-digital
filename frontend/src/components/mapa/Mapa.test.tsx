@@ -4,6 +4,7 @@ import { clienteMock } from '../../lib/mock'
 import { mapasCriados, type MapaFalso } from '../../test/maplibre-falso'
 import { renderizarEm } from '../../test/utils'
 import { CENTRO_DA_VILA, LIMITES, ZOOM_INICIAL } from './estilo'
+import { CAMINHOS_DO_TIPO, TIPOS } from './icones'
 
 beforeEach(() => {
   mapasCriados.length = 0
@@ -37,16 +38,58 @@ describe('mapa', () => {
     expect(JSON.stringify(atribuicao)).toContain('Protomaps')
   })
 
-  it('põe um marcador por local da API, com nome, categoria e coordenada', async () => {
+  it('põe um marcador por local, com o ícone e a cor do tipo e "nome, tipo" no aria-label', async () => {
     await abrirMapa()
     const locais = await clienteMock.locais()
 
     for (const local of locais) {
       const botao = marcadores().find((m) => m.dataset.localId === local.id)
       expect(botao, local.name).toBeDefined()
-      expect(botao!.getAttribute('aria-label')).toMatch(new RegExp(`^${local.name}, `))
-      expect(botao!.style.getPropertyValue('--cor-marcador')).toMatch(/^#[0-9a-f]{6}$/)
+      const tipo = TIPOS[local.kind]
+      expect(botao!.getAttribute('aria-label')).toBe(
+        `${local.name}, ${tipo.rotulo.toLocaleLowerCase('pt-BR')}`,
+      )
+      expect(botao!.dataset.tipo).toBe(local.kind)
+      expect(botao!.style.getPropertyValue('--cor-marcador')).toBe(tipo.cor)
+      // O ícone do tipo, decorativo (o nome do tipo já está no aria-label).
+      const svg = botao!.querySelector('.marcador__pino svg')!
+      expect(svg).toHaveAttribute('aria-hidden', 'true')
+      expect([...svg.querySelectorAll('path')].map((p) => p.getAttribute('d'))).toEqual(
+        CAMINHOS_DO_TIPO[local.kind],
+      )
     }
+  })
+
+  it('o marcador é um botão nativo: alcançável com Tab e aberto com Enter ou espaço', async () => {
+    await abrirMapa()
+
+    const praia = marcadores().find(
+      (m) => m.getAttribute('aria-label') === 'Praia do Sol Deitado, praia',
+    )!
+    expect(praia).toBeDefined()
+    expect(praia.tagName).toBe('BUTTON')
+    expect(praia).toHaveAttribute('type', 'button')
+    expect(praia.tabIndex).toBe(0)
+    expect(marcadores().map((m) => m.getAttribute('aria-label'))).toContain(
+      'Restaurante Vento Sul, estabelecimento',
+    )
+
+    // O jsdom não converte Enter/espaço em clique como o navegador faz num <button>; o clique é
+    // o que o navegador dispara. (Conferido com teclado de verdade no Firefox.)
+    praia.focus()
+    fireEvent.click(praia)
+    expect(
+      await screen.findByRole('heading', { name: 'Praia do Sol Deitado', level: 2 }),
+    ).toBeInTheDocument()
+  })
+
+  it('mostra a legenda fechada no canto do mapa', async () => {
+    await abrirMapa()
+
+    expect(screen.getByRole('button', { name: 'Legenda' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
   })
 
   it('os chips filtram os marcadores no cliente, sem chamar a API de novo', async () => {
