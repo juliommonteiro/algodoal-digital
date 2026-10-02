@@ -86,7 +86,7 @@ describe('erros do GPS', () => {
     expect(resultadoDoErro(1)).toEqual({ estado: 'bloqueado', aviso: MENSAGENS.negada })
     expect(resultadoDoErro(2)).toEqual({ estado: 'ocioso', aviso: MENSAGENS.indisponivel })
     expect(resultadoDoErro(3)).toEqual({ estado: 'ocioso', aviso: MENSAGENS.tempoEsgotado })
-    expect(MENSAGENS.tempoEsgotado).toMatch(/10 segundos/)
+    expect(MENSAGENS.tempoEsgotado).toMatch(/30 segundos/)
     const textos = [MENSAGENS.negada, MENSAGENS.indisponivel, MENSAGENS.tempoEsgotado]
     expect(new Set(textos).size).toBe(3)
   })
@@ -103,11 +103,11 @@ describe('erros do GPS', () => {
     })
   })
 
-  it('pede o GPS do aparelho, com 10 s de prazo, sem nada que dependa de rede', () => {
+  it('pede o GPS do aparelho, com 30 s de prazo (cold start sem A-GPS), sem nada que dependa de rede', () => {
     expect(OPCOES_DA_PRIMEIRA_POSICAO).toEqual({
       enableHighAccuracy: true,
-      timeout: 10_000,
-      maximumAge: 10_000,
+      timeout: 30_000,
+      maximumAge: 60_000,
     })
     expect(OPCOES_DO_ACOMPANHAMENTO.enableHighAccuracy).toBe(true)
   })

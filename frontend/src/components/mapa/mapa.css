@@ -187,31 +187,64 @@
 }
 
 /* ---------- Localização do usuário (BotaoLocalizacao.tsx) ---------- */
-/* Canto de baixo à esquerda: a legenda fica em cima e a atribuição à direita. */
-.localizacao {
+/* Botão logo abaixo do zoom, alinhado com ele: o MapLibre põe o zoom a 10px da borda (mais 1px
+   da borda do .mapa), em dois botões de --toque. Mudou o zoom, ajuste aqui. Nos outros cantos
+   ficam a legenda (em cima à esquerda) e a atribuição (embaixo à direita). */
+.localizacao__botao {
   position: absolute;
-  left: var(--e-2);
-  bottom: var(--e-2);
+  top: calc(11px + 2 * var(--toque) + 10px);
+  right: 11px;
   z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--e-2);
-  max-width: min(18rem, calc(100% - 2 * var(--e-2)));
+}
+/* O aviso vai abaixo do mapa, no fluxo da página. */
+.localizacao__aviso {
+  margin-top: var(--e-2);
+  scroll-margin-bottom: calc(72px + env(safe-area-inset-bottom)); /* a barra de abas */
 }
 .localizacao__aviso:empty {
   display: none;
 }
-.localizacao__aviso p {
-  padding: var(--e-2) var(--e-3);
+.localizacao__aviso > p,
+.localizacao__caixa {
   border: 1px solid var(--borda);
   border-left: 4px solid var(--terracota);
   border-radius: var(--r-card);
   background: rgb(253 252 247 / 0.97);
   box-shadow: 0 1px 4px rgb(26 33 28 / 0.25);
+}
+.localizacao__aviso > p {
+  padding: var(--e-2) var(--e-3);
+  border-left-color: var(--mapa-eu);
+}
+.localizacao__caixa {
+  display: flex;
+  align-items: flex-start;
+}
+.localizacao__texto {
   color: var(--tinta);
   font-size: 14px;
   line-height: 1.35;
+}
+.localizacao__caixa .localizacao__texto {
+  flex: 1;
+  padding: var(--e-2) 0 var(--e-2) var(--e-3);
+}
+/* Fechar: alvo de toque de 48px (--toque). */
+.localizacao__fechar {
+  flex: 0 0 var(--toque);
+  display: grid;
+  place-items: center;
+  width: var(--toque);
+  height: var(--toque);
+  border: 0;
+  border-radius: var(--r-botao);
+  background: none;
+  color: var(--suave);
+  cursor: pointer;
+}
+.localizacao__fechar:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
 }
 .localizacao__botao {
   display: grid;

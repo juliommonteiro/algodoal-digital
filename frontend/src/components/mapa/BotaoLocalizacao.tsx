@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Icone } from '../Icone'
 import {
   decidirPosicao,
+  MENSAGENS,
   impedimentoDoNavegador,
   OPCOES_DA_PRIMEIRA_POSICAO,
   OPCOES_DO_ACOMPANHAMENTO,
@@ -50,6 +51,18 @@ export function BotaoLocalizacao({ obterMapa }: { obterMapa: () => MapaLibre | n
 
   // Saiu da tela do mapa: encerra o acompanhamento e tira o ponto.
   useEffect(() => parar, [])
+
+  // O aviso fica abaixo do mapa: num celular pequeno cairia atrás da barra de abas, então a
+  // página rola o mínimo para ele aparecer (sem animação para quem prefere menos movimento).
+  const areaDoAviso = useRef<HTMLDivElement>(null)
+  const temTexto = estado === 'buscando' || aviso !== null
+  useEffect(() => {
+    if (!temTexto) return
+    areaDoAviso.current?.scrollIntoView?.({
+      block: 'nearest',
+      behavior: prefereMenosMovimento() ? 'auto' : 'smooth',
+    })
+  }, [temTexto, aviso])
 
   function aplicar(posicao: GeolocationPosition, mapa: MapaLibre, primeira: boolean) {
     const decisao = decidirPosicao(posicao.coords)
@@ -134,11 +147,7 @@ export function BotaoLocalizacao({ obterMapa }: { obterMapa: () => MapaLibre | n
   }
 
   return (
-    <div className="localizacao">
-      {/* Só o texto do aviso: o leitor de tela anuncia quando aparece. */}
-      <div className="localizacao__aviso" role="status" aria-live="polite">
-        {aviso && <p>{aviso}</p>}
-      </div>
+    <>
       <button
         type="button"
         className="localizacao__botao"
@@ -150,6 +159,28 @@ export function BotaoLocalizacao({ obterMapa }: { obterMapa: () => MapaLibre | n
       >
         <Icone nome={estado === 'bloqueado' ? 'miraBloqueada' : 'mira'} />
       </button>
-    </div>
+      {/* Logo abaixo do mapa, e não por cima: não cobre marcador nem esbarra na legenda aberta.
+          O leitor de tela anuncia quando aparece. Buscando, explica a espera (o primeiro fix
+          sem rede demora); os avisos ficam até a pessoa fechar — nenhum some sozinho. */}
+      <div ref={areaDoAviso} className="localizacao__aviso" role="status" aria-live="polite">
+        {estado === 'buscando' ? (
+          <p className="localizacao__texto">{MENSAGENS.buscando}</p>
+        ) : (
+          aviso && (
+            <div className="localizacao__caixa">
+              <p className="localizacao__texto">{aviso}</p>
+              <button
+                type="button"
+                className="localizacao__fechar"
+                aria-label="Fechar aviso"
+                onClick={() => setAviso(null)}
+              >
+                <Icone nome="fechar" tamanho={18} />
+              </button>
+            </div>
+          )
+        )}
+      </div>
+    </>
   )
 }

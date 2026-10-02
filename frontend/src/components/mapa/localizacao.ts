@@ -13,12 +13,16 @@ export const ZOOM_DA_LOCALIZACAO = 15
  * GPS sem rede: enableHighAccuracy true pede o GPS do aparelho, que funciona offline. Com
  * false, o Android prefere a posição por Wi-Fi e antena, que depende de rede para resolver —
  * na ilha sem sinal, não viria. Nenhum fallback por rede, e nenhuma chamada de API.
+ *
+ * Prazo de 30 s: sem rede não há A-GPS (os dados de satélite que a rede entrega prontos), então
+ * o primeiro fix é cold start e leva de 30 a 60 s a céu aberto. Com 10 s falharia justamente em
+ * Algodoal, que é onde o recurso importa. Uma posição de até 1 min atrás é aceita na hora: quem
+ * já tinha fix (outro app, ou tocou no botão há pouco) não espera de novo.
  */
 export const OPCOES_DA_PRIMEIRA_POSICAO: PositionOptions = {
   enableHighAccuracy: true,
-  timeout: 10_000,
-  // Uma posição de até 10 s atrás ainda é onde a pessoa está, e responde na hora.
-  maximumAge: 10_000,
+  timeout: 30_000,
+  maximumAge: 60_000,
 }
 
 /** Acompanhando: sem prazo (o GPS manda quando tiver posição nova). */
@@ -36,8 +40,12 @@ export const MENSAGENS = {
   negada:
     'Você não permitiu o acesso à localização. Para usar, libere a localização deste site nas ' +
     'configurações do navegador e toque de novo.',
+  buscando:
+    'Procurando sinal de GPS… Sem internet, a primeira posição pode levar até um minuto. ' +
+    'Fique em lugar aberto, longe de telhado.',
   tempoEsgotado:
-    'O GPS não respondeu em 10 segundos. Vá para um lugar mais aberto e toque de novo.',
+    'O GPS não achou sinal em 30 segundos. Vá para um lugar aberto, longe de telhado, e toque ' +
+    'de novo.',
   indisponivel:
     'Não foi possível descobrir sua posição. Confira se a localização do celular está ligada e ' +
     'toque de novo.',

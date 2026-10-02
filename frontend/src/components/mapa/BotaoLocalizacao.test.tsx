@@ -47,7 +47,7 @@ function renderizar() {
   return render(<BotaoLocalizacao obterMapa={() => mapa as unknown as MapaLibre} />)
 }
 
-const botao = () => screen.getByRole('button')
+const botao = () => document.querySelector<HTMLButtonElement>('.localizacao__botao')!
 const pontoAzul = () => mapa.container.querySelector<HTMLElement>('.eu')
 const tocar = () => fireEvent.click(botao())
 /** Responde o pedido de posição que está pendente. */
@@ -87,8 +87,8 @@ describe('botão de localização', () => {
     expect(botao()).toHaveAttribute('aria-busy', 'true')
     expect(gps.getCurrentPosition.mock.calls[0][2]).toEqual({
       enableHighAccuracy: true,
-      timeout: 10_000,
-      maximumAge: 10_000,
+      timeout: 30_000,
+      maximumAge: 60_000,
     })
 
     responder(VILA)
@@ -116,6 +116,35 @@ describe('botão de localização', () => {
     })
 
     expect(pontoAzul()!.querySelector<HTMLElement>('.eu__halo')!.style.width).toBe('40px')
+  })
+
+  it('buscando: explica que está procurando sinal de GPS, não só anima o botão', () => {
+    renderizar()
+
+    tocar()
+
+    expect(screen.getByRole('status')).toHaveTextContent(/Procurando sinal de GPS/)
+    expect(screen.getByRole('status')).toHaveTextContent(/pode levar até um minuto/)
+    // Buscando não tem "fechar": tocar no botão de novo é o que cancela.
+    expect(screen.queryByRole('button', { name: 'Fechar aviso' })).not.toBeInTheDocument()
+  })
+
+  it('o aviso de fora da área não some sozinho e fecha no X', () => {
+    vi.useFakeTimers()
+    try {
+      renderizar()
+      tocar()
+      responder(BELEM)
+
+      act(() => vi.advanceTimersByTime(10 * 60_000))
+      expect(screen.getByRole('status')).toHaveTextContent(MENSAGENS.fora)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Fechar aviso' }))
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
+      expect(botao()).toHaveAttribute('data-estado', 'ocioso')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('em Belém: não centraliza, avisa que está fora e não fica acompanhando', () => {
