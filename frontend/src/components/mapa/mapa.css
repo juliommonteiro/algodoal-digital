@@ -43,7 +43,8 @@
 }
 
 /* ---------- Marcadores ---------- */
-/* O botão é o alvo de toque (48px); o ponto colorido é o ::before. */
+/* O botão é o alvo de toque (48px); o pino colorido com o ícone do tipo (icones.tsx) fica no
+   centro. Ícone branco sobre a cor do grupo: contraste de 4.7:1 a 10.3:1 (tokens.css). */
 .marcador {
   width: var(--toque);
   height: var(--toque);
@@ -55,36 +56,134 @@
   place-items: center;
   -webkit-tap-highlight-color: transparent;
 }
-.marcador::before {
-  content: '';
-  width: 18px;
-  height: 18px;
+.marcador__pino {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--cor-marcador, var(--suave));
-  border: 3px solid var(--superficie);
+  border: 2px solid var(--superficie);
   box-shadow:
     0 0 0 1px rgb(26 33 28 / 0.45),
     0 1px 3px rgb(26 33 28 / 0.35);
+  color: #fff;
   transition: transform 0.15s ease;
+}
+.marcador__pino svg {
+  width: 18px;
+  height: 18px;
 }
 .marcador[aria-pressed='true'] {
   z-index: 2;
 }
-.marcador[aria-pressed='true']::before {
-  transform: scale(1.35);
+.marcador[aria-pressed='true'] .marcador__pino {
+  transform: scale(1.25);
   box-shadow:
     0 0 0 2px var(--tinta),
     0 2px 6px rgb(26 33 28 / 0.45);
 }
 .marcador:focus-visible {
   outline: 3px solid var(--foco);
-  outline-offset: -6px;
+  outline-offset: -3px;
   border-radius: 50%;
 }
 @media (prefers-reduced-motion: reduce) {
-  .marcador::before {
+  .marcador__pino {
     transition: none;
   }
+}
+
+/* ---------- Legenda (Legenda.tsx) ---------- */
+/* Canto de cima à esquerda: o zoom fica à direita e a atribuição embaixo. */
+.mapa-moldura {
+  position: relative;
+  margin-bottom: var(--e-4);
+}
+.mapa-moldura > .mapa {
+  margin-bottom: 0;
+}
+.legenda {
+  position: absolute;
+  top: var(--e-2);
+  left: var(--e-2);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e-1);
+  /* Aberta, não passa da altura do mapa nem de uns dois terços da largura. */
+  max-width: min(15rem, 62%);
+  max-height: calc(100% - 2 * var(--e-2));
+}
+.legenda__botao {
+  min-height: 36px;
+  padding: var(--e-1) var(--e-3);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-chip);
+  background: var(--superficie);
+  color: var(--tinta);
+  font-family: var(--fonte-ui);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgb(26 33 28 / 0.25);
+  cursor: pointer;
+  position: relative;
+}
+/* Alvo de toque de 48px sem aumentar o botão. */
+.legenda__botao::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.legenda__botao:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 1px;
+}
+.legenda__conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  overflow-y: auto;
+  padding: var(--e-2) var(--e-3);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-card);
+  background: rgb(253 252 247 / 0.96);
+  box-shadow: 0 2px 6px rgb(26 33 28 / 0.25);
+}
+.legenda__conteudo[hidden] {
+  display: none;
+}
+.legenda__titulo {
+  font-family: var(--fonte-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+.legenda__grupo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.legenda__tipo {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: 24px;
+  font-size: 13px;
+  color: var(--tinta);
+}
+.legenda__pino {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cor-marcador);
+  color: #fff;
 }
 
 /* ---------- Card do local (protótipo 02-mapa.png) ---------- */

@@ -23,6 +23,14 @@
   --mapa-vegetacao: #c7e0c1; /* verde de mangue */
   --mapa-praia: #eee4cb; /* areia de praia */
 
+  /* Grupos dos tipos de local no mapa (S7): cor do pino, com o ícone branco por cima.
+     Contraste do branco: mar 5.9:1, sol 4.7:1, mangue 10.3:1, terra 5.3:1. O --sol é um
+     âmbar queimado e não amarelo: o #c98a1e daria só 2.9:1. */
+  --mar: #1b6c8c; /* explorar: praia, trilha, ponto turístico */
+  --sol: #9a6a17; /* economia local: estabelecimento, experiência */
+  --mangue: #15493a; /* ambiental: ponto de coleta */
+  --terra: #a8543a; /* cultura */
+
   /* Raios */
   --r-chip: 20px;
   --r-botao: 10px;
@@ -63,5 +71,9 @@
     --mapa-agua: oklch(0.9 0.028 216);
     --mapa-vegetacao: oklch(0.88 0.05 140);
     --mapa-praia: oklch(0.92 0.035 89);
+    --mar: oklch(0.499 0.09 229.8);
+    --sol: oklch(0.561 0.11 75.1);
+    --mangue: oklch(0.366 0.061 170.3);
+    --terra: oklch(0.543 0.117 37.9);
   }
 }

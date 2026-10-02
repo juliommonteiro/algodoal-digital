@@ -6,6 +6,7 @@ import type { Categoria, Local } from '../../lib/tipos'
 import { useCarregar } from '../../lib/useCarregar'
 import { carregarArquivoDoMapa, chaveDoArquivo } from './arquivo'
 import { AvisoDoMapa } from './AvisoDoMapa'
+import { Legenda } from './Legenda'
 import {
   CENTRO_DA_VILA,
   CREDITO_PROTOMAPS,
@@ -113,5 +114,11 @@ export default function Mapa({ locais, categorias, selecionado, aoSelecionar }: 
     return <AvisoDoMapa motivo="sem-arquivo" aoTentarDeNovo={arquivo.recarregar} />
   }
 
-  return <div ref={container} className="mapa" role="region" aria-label="Mapa da ilha" />
+  // A legenda fica por cima do mapa, mas fora do container: os filhos dele são do MapLibre.
+  return (
+    <div className="mapa-moldura">
+      <div ref={container} className="mapa" role="region" aria-label="Mapa da ilha" />
+      <Legenda />
+    </div>
+  )
 }

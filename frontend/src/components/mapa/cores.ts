@@ -17,6 +17,10 @@ export const COR = {
   mapaAgua: '#cae3ea',
   mapaVegetacao: '#c7e0c1',
   mapaPraia: '#eee4cb',
+  mar: '#1b6c8c',
+  sol: '#9a6a17',
+  mangue: '#15493a',
+  terra: '#a8543a',
 } as const
 
 /** Nome da variável CSS de cada cor, para o teste de sincronia. */
@@ -34,18 +38,8 @@ export const TOKEN_DA_COR: Record<keyof typeof COR, string> = {
   mapaAgua: '--mapa-agua',
   mapaVegetacao: '--mapa-vegetacao',
   mapaPraia: '--mapa-praia',
+  mar: '--mar',
+  sol: '--sol',
+  mangue: '--mangue',
+  terra: '--terra',
 }
-
-/**
- * Cor do marcador pela categoria de primeiro nível. Os tokens dão poucos tons bem distintos;
- * o nome e a categoria também vão no aria-label e no card, então a cor nunca é a única pista.
- */
-export const COR_DA_CATEGORIA: Record<string, string> = {
-  turismo: COR.verde,
-  alimentacao: COR.terracota,
-  hospedagem: COR.tinta,
-  cultura: COR.areia,
-  preservacao: COR.verdeFundo,
-  servicos: COR.suave,
-}
-export const COR_SEM_CATEGORIA = COR.suave
