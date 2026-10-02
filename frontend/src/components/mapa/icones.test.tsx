@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { ROTULO_TIPO } from '../../lib/formatos'
 import type { TipoLocal } from '../../lib/tipos'
-import { COR } from './cores'
+import { contraste, hexDoToken } from '../../test/tokens'
+import mapaCss from './mapa.css?raw'
+import { classeDoGrupo } from './cores'
 import { CAMINHOS_DO_TIPO, GRUPOS, TIPOS } from './icones'
 
 // Os sete valores do enum PlaceKind do backend (app/schemas/place.py).
@@ -17,18 +19,12 @@ const SETE_TIPOS: TipoLocal[] = [
   'culture',
 ]
 
-/** Contraste WCAG 2 entre duas cores em hex. */
-function contraste(a: string, b: string): number {
-  const luminancia = (hex: string) => {
-    const [r, g, bl] = [1, 3, 5].map((i) => {
-      const c = parseInt(hex.slice(i, i + 2), 16) / 255
-      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-    })
-    return 0.2126 * r + 0.7152 * g + 0.0722 * bl
-  }
-  const [claro, escuro] = [luminancia(a), luminancia(b)].sort((x, y) => y - x)
-  return (claro + 0.05) / (escuro + 0.05)
-}
+/** Token que pinta cada classe de grupo no mapa.css (.pino--explorar { background-color: var(--mar) }). */
+const tokenDaClasse = new Map(
+  [...mapaCss.matchAll(/\.(pino--[a-z]+) \{\s*background-color: var\((--[a-z-]+)\);/g)].map(
+    ([, classe, token]) => [classe, token],
+  ),
+)
 
 describe('ícones dos tipos de local', () => {
   it('cobre exatamente os sete tipos', () => {
@@ -50,35 +46,39 @@ describe('ícones dos tipos de local', () => {
     expect(rotulo).toBe(ROTULO_TIPO[tipo])
   })
 
-  it('agrupa os tipos e dá a cor do grupo', () => {
-    const esperado: Record<TipoLocal, [string, string]> = {
-      beach: ['explorar', COR.mar],
-      trail: ['explorar', COR.mar],
-      tourist_point: ['explorar', COR.mar],
-      business: ['economia', COR.sol],
-      experience: ['economia', COR.sol],
-      collection_point: ['ambiental', COR.mangue],
-      culture: ['cultura', COR.terra],
+  it('agrupa os tipos, e cada grupo pinta o pino com o seu token', () => {
+    const esperado: Record<TipoLocal, string> = {
+      beach: 'explorar',
+      trail: 'explorar',
+      tourist_point: 'explorar',
+      business: 'economia',
+      experience: 'economia',
+      collection_point: 'ambiental',
+      culture: 'cultura',
     }
-    for (const tipo of SETE_TIPOS) {
-      expect([TIPOS[tipo].grupo, TIPOS[tipo].cor], tipo).toEqual(esperado[tipo])
-    }
-    expect(COR).toMatchObject({
-      mar: '#1b6c8c',
-      sol: '#9a6a17',
-      // apelidos de tokens que já existiam
-      mangue: COR.verdeFundo,
-      terra: COR.terracota,
+    for (const tipo of SETE_TIPOS) expect(TIPOS[tipo].grupo, tipo).toBe(esperado[tipo])
+
+    const tokenDoGrupo = Object.fromEntries(
+      Object.keys(GRUPOS).map((grupo) => [
+        grupo,
+        tokenDaClasse.get(classeDoGrupo(grupo as keyof typeof GRUPOS)),
+      ]),
+    )
+    expect(tokenDoGrupo).toEqual({
+      explorar: '--mar',
+      economia: '--sol',
+      ambiental: '--mangue',
+      cultura: '--terra',
     })
-    expect([COR.verdeFundo, COR.terracota]).toEqual(['#004f38', '#a04f27'])
   })
 
   it('o ícone branco sobre cada cor de grupo tem contraste de 4,5:1 ou mais', () => {
     const contrastes = Object.fromEntries(
-      Object.entries(GRUPOS).map(([grupo, { cor }]) => [
-        grupo,
-        Math.round(contraste('#ffffff', cor) * 10) / 10,
-      ]),
+      Object.keys(GRUPOS).map((grupo) => {
+        const token = tokenDaClasse.get(classeDoGrupo(grupo as keyof typeof GRUPOS))!
+        const hex = hexDoToken(token)!
+        return [grupo, Math.round(contraste('#ffffff', hex) * 10) / 10]
+      }),
     )
     // mar 5,9; sol 4,7; mangue = verde-fundo 9,7; terra = terracota 5,8
     expect(contrastes).toEqual({ explorar: 5.9, economia: 4.7, ambiental: 9.7, cultura: 5.8 })

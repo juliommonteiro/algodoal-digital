@@ -50,7 +50,9 @@ describe('mapa', () => {
         `${local.name}, ${tipo.rotulo.toLocaleLowerCase('pt-BR')}`,
       )
       expect(botao!.dataset.tipo).toBe(local.kind)
-      expect(botao!.style.getPropertyValue('--cor-marcador')).toBe(tipo.cor)
+      // A cor é a classe do grupo, pintada no mapa.css com o token — nada de hex no elemento.
+      expect(botao!.querySelector('.marcador__pino')).toHaveClass(`pino--${tipo.grupo}`)
+      expect(botao!.getAttribute('style') ?? '').not.toMatch(/#[0-9a-f]{3,6}/i)
       // O ícone do tipo, decorativo (o nome do tipo já está no aria-label).
       const svg = botao!.querySelector('.marcador__pino svg')!
       expect(svg).toHaveAttribute('aria-hidden', 'true')
