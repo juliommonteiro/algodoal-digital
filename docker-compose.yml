@@ -23,6 +23,11 @@ services:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
+      # Só leitura, para o teste de consistência da bbox (backend/tests/test_area_do_mapa.py)
+      # comparar a área do mapa do backend com a do frontend e a do recorte dos tiles. Mesmos
+      # caminhos relativos à raiz do repositório. Sai quando a bbox tiver fonte única (#50).
+      - ./frontend/src/lib:/frontend/src/lib:ro
+      - ./scripts:/scripts:ro
     depends_on:
       db:
         condition: service_healthy
