@@ -137,14 +137,18 @@ Centro e zooms do mapa (`CENTRO_DA_VILA`, `ZOOM_INICIAL`, `ZOOM_MINIMO`, `ZOOM_M
 
 ### Cores
 
+Regra: cor só em `frontend/src/styles/tokens.css`, usada como `var(--token)` no CSS. O TypeScript não tem hex, com duas exceções de propósito, porque o destino é JSON e não lê variável CSS (estado depois do #52):
+
 | Onde | O que |
 |---|---|
-| `frontend/src/styles/tokens.css` | **fonte**: todos os tokens de cor (hex e OKLCH) |
-| `frontend/src/components/mapa/cores.ts` | cópia em hex para o MapLibre, que não lê variável CSS; `cores.test.ts` confere com o tokens.css |
-| `frontend/src/components/mapa/icones.tsx` | `GRUPOS` e `TIPOS`: grupo de cada tipo de local e cor do pino |
-| `frontend/vite.config.ts` | `background_color` e `theme_color` do manifest |
-| `frontend/index.html` | `<meta name="theme-color">` |
-| `frontend/public/favicon.svg` | cores do favicon, à mão |
+| `frontend/src/styles/tokens.css` | **fonte**: todos os tokens de cor (hex de fallback e OKLCH). `--mangue` e `--terra` são apelidos de `--verde-fundo` e `--terracota` |
+| `frontend/src/components/mapa/mapa.css` | `.pino--explorar`, `.pino--economia`, `.pino--ambiental`, `.pino--cultura`: a cor de cada grupo de pino, com `var(--mar)`, `var(--sol)`, `var(--mangue)`, `var(--terra)`. As mesmas classes servem ao marcador e à legenda |
+| `frontend/src/components/mapa/cores.ts` | `classeDoGrupo` (grupo → classe do pino) e **exceção 1**: `COR`, espelho em hex de `--fundo`, `--superficie`, `--borda`, `--mapa-agua`, `--mapa-vegetacao` e `--mapa-praia` para o estilo do MapLibre (montado em `estilo.ts`) |
+| `frontend/vite.config.ts` | **exceção 2**: `background_color` (`--fundo`) e `theme_color` (`--verde-fundo`) do manifest |
+| `frontend/index.html` | `<meta name="theme-color">`, à mão (issue #51) |
+| `frontend/public/favicon.svg` | cores do favicon, à mão; o amarelo #F2B138 não é token (issue #51) |
+
+As duas exceções **não devem ser unificadas**. O MapLibre e o manifest precisam da cor concreta, e por isso usam o hex de fallback, nunca a versão OKLCH. Mudou um desses tokens? Atualize junto o `cores.ts` ou o `vite.config.ts`. O `cores.test.ts` compara as duas cópias com o `tokens.css` e falha se aparecer hex em qualquer outro arquivo TypeScript.
 
 ### Tipos (contrato frontend ↔ backend)
 
