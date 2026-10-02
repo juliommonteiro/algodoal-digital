@@ -8,9 +8,17 @@ shell.
 Provisório: a unificação numa fonte única fica para depois da AV1 (issue #50). Quando ela
 existir, este teste sai.
 
-Onde os arquivos estão: no CI, o checkout inteiro (a raiz é o pai de backend/). No container da
-API, que monta só backend/ em /app, o docker-compose.yml monta também frontend/src/lib e
-scripts/ só para leitura, nos mesmos caminhos relativos à raiz (/).
+Onde roda: o CI (.github/workflows/ci.yml, job "API") roda o pytest direto no runner, com o
+checkout inteiro do repositório — a raiz é o pai de backend/ e os três arquivos estão lá. O
+container da API NÃO é necessário para este teste. As montagens só leitura de frontend/src/lib e
+scripts/ no docker-compose.yml existem só para ele também rodar localmente com
+`docker compose exec api pytest` (o container monta backend/ em /app, e as montagens põem os
+outros dois arquivos nos mesmos caminhos relativos, a partir de /).
+
+Arquivo que não for encontrado faz o teste FALHAR, com mensagem — nunca pular nem passar: um
+guarda que some calado é pior que nenhum.
+
+Tirar este teste do pytest fica para a issue #50, junto com a fonte única.
 """
 
 import re
@@ -37,8 +45,9 @@ def _ler(nome: str) -> str:
     caminho = ARQUIVOS[nome]
     if not caminho.is_file():
         pytest.fail(
-            f"{caminho} não encontrado. No container, recrie a API para pegar as montagens "
-            "de frontend/src/lib e scripts/ do docker-compose.yml: docker compose up -d api"
+            f"{caminho} não encontrado: sem ele não dá para conferir a área do mapa. Se o arquivo "
+            "mudou de lugar ou de nome, atualize ARQUIVOS neste teste. Rodando no container da "
+            "API, recrie-o para pegar as montagens do docker-compose.yml: docker compose up -d api"
         )
     return caminho.read_text(encoding="utf-8")
 
