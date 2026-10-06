@@ -4,7 +4,7 @@
 import type { ComponentType, SVGProps } from 'react'
 import { ROTULO_TIPO } from '../../lib/formatos'
 import type { TipoLocal } from '../../lib/tipos'
-import { COR } from './cores'
+import type { GrupoDoTipo } from './cores'
 
 /*
  * Ícones dos tipos de local, desenhados à mão no mesmo grid 24x24 do Icone.tsx e embutidos no
@@ -103,24 +103,23 @@ export function IconeCultura(props: PropsDoIcone) {
   return <Desenho tipo="culture" {...props} />
 }
 
-export type GrupoDoTipo = 'explorar' | 'economia' | 'ambiental' | 'cultura'
+export type { GrupoDoTipo }
 
 /**
- * Cor de cada grupo, de tokens.css. O ícone é branco sobre ela; contraste conferido em
- * icones.test.ts (mínimo 4,5:1). Na ordem da legenda.
+ * Nome de cada grupo, na ordem da legenda. A cor do pino é a classe do grupo
+ * (classeDoGrupo, em cores.ts), pintada no mapa.css com var(--mar), var(--sol), var(--mangue) e
+ * var(--terra); o contraste do ícone branco é conferido em icones.test.tsx.
  */
-export const GRUPOS: Record<GrupoDoTipo, { rotulo: string; cor: string }> = {
-  explorar: { rotulo: 'Explorar', cor: COR.mar },
-  economia: { rotulo: 'Economia local', cor: COR.sol },
-  ambiental: { rotulo: 'Ambiental', cor: COR.mangue },
-  cultura: { rotulo: 'Cultura', cor: COR.terra },
+export const GRUPOS: Record<GrupoDoTipo, { rotulo: string }> = {
+  explorar: { rotulo: 'Explorar' },
+  economia: { rotulo: 'Economia local' },
+  ambiental: { rotulo: 'Ambiental' },
+  cultura: { rotulo: 'Cultura' },
 }
 
 export interface DadosDoTipo {
   icone: ComponentType<PropsDoIcone>
   grupo: GrupoDoTipo
-  /** Cor do pino (a do grupo). */
-  cor: string
   /** O mesmo rótulo da lista de locais (ROTULO_TIPO): vai no aria-label e na legenda. */
   rotulo: string
 }
@@ -128,11 +127,10 @@ export interface DadosDoTipo {
 const dados = (icone: ComponentType<PropsDoIcone>, grupo: GrupoDoTipo, tipo: TipoLocal) => ({
   icone,
   grupo,
-  cor: GRUPOS[grupo].cor,
   rotulo: ROTULO_TIPO[tipo],
 })
 
-/** Tipo do local → ícone, grupo, cor e rótulo. Na ordem da legenda. */
+/** Tipo do local → ícone, grupo e rótulo. Na ordem da legenda. */
 export const TIPOS: Record<TipoLocal, DadosDoTipo> = {
   beach: dados(IconePraia, 'explorar', 'beach'),
   trail: dados(IconeTrilha, 'explorar', 'trail'),

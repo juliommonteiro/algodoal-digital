@@ -24,12 +24,16 @@
   --mapa-praia: #eee4cb; /* areia de praia */
 
   /* Grupos dos tipos de local no mapa (S7): cor do pino, com o ícone branco por cima.
-     Contraste do branco: mar 5.9:1, sol 4.7:1, mangue 10.3:1, terra 5.3:1. O --sol é um
-     âmbar queimado e não amarelo: o #c98a1e daria só 2.9:1. */
+     Contraste do branco: mar 5.9:1, sol 4.7:1, mangue (verde-fundo) 9.7:1, terra (terracota)
+     5.8:1. O --sol é um âmbar queimado e não amarelo: o #c98a1e daria só 2.9:1.
+     --mangue e --terra são apelidos de cores que já existiam, sem hex próprio. Declarados só
+     aqui: var() resolve no uso, então em OKLCH (bloco @supports) acompanham sozinhos. Os nomes
+     ficam porque descrevem o grupo do mapa: para separar o pino do acento de alerta, basta
+     trocar o apelido por uma cor própria. */
   --mar: #1b6c8c; /* explorar: praia, trilha, ponto turístico */
   --sol: #9a6a17; /* economia local: estabelecimento, experiência */
-  --mangue: #15493a; /* ambiental: ponto de coleta */
-  --terra: #a8543a; /* cultura */
+  --mangue: var(--verde-fundo); /* ambiental: ponto de coleta */
+  --terra: var(--terracota); /* cultura */
 
   /* "Você está aqui" (S7): fora da paleta da marca de propósito. A bolinha azul é convenção
      de todo app de mapa e não pode se confundir com os pinos dos locais. Contra os
@@ -78,8 +82,6 @@
     --mapa-praia: oklch(0.92 0.035 89);
     --mar: oklch(0.499 0.09 229.8);
     --sol: oklch(0.561 0.11 75.1);
-    --mangue: oklch(0.366 0.061 170.3);
-    --terra: oklch(0.543 0.117 37.9);
     --mapa-eu: oklch(0.557 0.187 261.2);
   }
 }

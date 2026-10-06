@@ -117,7 +117,8 @@ export default defineConfig({
     // real (VITE_USAR_MOCK=false): sem isso, a suíte depende de um backend no ar.
     env: { VITE_USAR_MOCK: 'true' },
     setupFiles: ['./src/test/setup.ts'],
-    // CSS desligado nos testes, menos o tokens.css: o teste das cores do mapa o lê (?raw).
-    css: { include: [/styles\/tokens\.css/] },
+    // CSS desligado nos testes, menos o tokens.css e o mapa.css: os testes das cores do mapa
+    // os leem (?raw) para conferir que os pinos pintam com os tokens.
+    css: { include: [/styles\/tokens\.css/, /components\/mapa\/mapa\.css/] },
   },
 })
