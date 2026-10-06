@@ -200,6 +200,133 @@
   color: #fff;
 }
 
+/* ---------- Localização do usuário (BotaoLocalizacao.tsx) ---------- */
+/* Botão logo abaixo do zoom, alinhado com ele: o MapLibre põe o zoom a 10px da borda (mais 1px
+   da borda do .mapa), em dois botões de --toque. Mudou o zoom, ajuste aqui. Nos outros cantos
+   ficam a legenda (em cima à esquerda) e a atribuição (embaixo à direita). */
+.localizacao__botao {
+  position: absolute;
+  top: calc(11px + 2 * var(--toque) + 10px);
+  right: 11px;
+  z-index: 3;
+}
+/* O aviso vai abaixo do mapa, no fluxo da página. */
+.localizacao__aviso {
+  margin-top: var(--e-2);
+  scroll-margin-bottom: calc(72px + env(safe-area-inset-bottom)); /* a barra de abas */
+}
+.localizacao__aviso:empty {
+  display: none;
+}
+.localizacao__aviso > p,
+.localizacao__caixa {
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--terracota);
+  border-radius: var(--r-card);
+  background: rgb(253 252 247 / 0.97);
+  box-shadow: 0 1px 4px rgb(26 33 28 / 0.25);
+}
+.localizacao__aviso > p {
+  padding: var(--e-2) var(--e-3);
+  border-left-color: var(--mapa-eu);
+}
+.localizacao__caixa {
+  display: flex;
+  align-items: flex-start;
+}
+.localizacao__texto {
+  color: var(--tinta);
+  font-size: 14px;
+  line-height: 1.35;
+}
+.localizacao__caixa .localizacao__texto {
+  flex: 1;
+  padding: var(--e-2) 0 var(--e-2) var(--e-3);
+}
+/* Fechar: alvo de toque de 48px (--toque). */
+.localizacao__fechar {
+  flex: 0 0 var(--toque);
+  display: grid;
+  place-items: center;
+  width: var(--toque);
+  height: var(--toque);
+  border: 0;
+  border-radius: var(--r-botao);
+  background: none;
+  color: var(--suave);
+  cursor: pointer;
+}
+.localizacao__fechar:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}
+.localizacao__botao {
+  display: grid;
+  place-items: center;
+  width: var(--toque);
+  height: var(--toque);
+  border: 1px solid var(--borda);
+  border-radius: var(--r-botao);
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: 0 1px 3px rgb(26 33 28 / 0.25);
+  cursor: pointer;
+}
+.localizacao__botao:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 1px;
+}
+.localizacao__botao[data-estado='ativo'] {
+  color: var(--mapa-eu);
+  border-color: var(--mapa-eu);
+}
+.localizacao__botao[data-estado='bloqueado'] {
+  color: var(--suave);
+}
+.localizacao__botao[data-estado='buscando'] svg {
+  animation: localizacao-pulso 1s ease-in-out infinite;
+}
+@keyframes localizacao-pulso {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .localizacao__botao[data-estado='buscando'] svg {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* O "você está aqui": ponto azul, anel branco e o halo da precisão (tamanho no JS). */
+.eu {
+  display: grid;
+  place-items: center;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.eu[hidden] {
+  display: none;
+}
+.eu__halo,
+.eu__ponto {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.eu__halo {
+  background: color-mix(in srgb, var(--mapa-eu) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mapa-eu) 45%, transparent);
+}
+.eu__ponto {
+  width: 18px;
+  height: 18px;
+  background: var(--mapa-eu);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(26 33 28 / 0.45);
+}
+
 /* ---------- Card do local (protótipo 02-mapa.png) ---------- */
 .card-do-local {
   position: relative;
