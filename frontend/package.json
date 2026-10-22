@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@protomaps/basemaps": "^5.7.2",
+    "dexie": "^4.4.6",
     "maplibre-gl": "^6.11.2",
     "pmtiles": "^4.5.0",
     "react": "^19.2.8",
@@ -28,6 +29,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "fake-indexeddb": "^6.2.6",
     "jsdom": "^30.0.1",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
