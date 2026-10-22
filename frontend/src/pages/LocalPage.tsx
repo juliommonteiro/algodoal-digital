@@ -10,7 +10,6 @@ import { EstadoVazio } from '../components/ui/EstadoVazio'
 import { Rotulo } from '../components/ui/Rotulo'
 import { buscarLocal } from '../lib/catalogo'
 import { porId } from '../lib/categorias'
-import { api } from '../lib/cliente'
 import {
   chaveDeHoje,
   coordenadas,
@@ -21,6 +20,7 @@ import {
   linkWhatsApp,
   ROTULO_TIPO,
 } from '../lib/formatos'
+import { catalogoRepository } from '../lib/repositories/catalogoRepository'
 import type { Negocio } from '../lib/tipos'
 import { useCarregar } from '../lib/useCarregar'
 
@@ -29,7 +29,10 @@ export function LocalPage() {
   const navegar = useNavigate()
   const local = useLocation()
   const carga = useCarregar(`local:${id}`, async () => {
-    const [dados, categorias] = await Promise.all([buscarLocal(id), api.categorias()])
+    const [dados, categorias] = await Promise.all([
+      buscarLocal(id),
+      catalogoRepository.listarCategorias(),
+    ])
     return { local: dados, categoria: porId(categorias).get(dados.category_id) }
   })
 
