@@ -87,7 +87,7 @@ export default defineConfig({
   // O worker do MapLibre é um módulo ES (importa código compartilhado): empacota como ES.
   worker: { format: 'es' },
   server: {
-    proxy: { '/api': 'http://localhost:8000' },
+    proxy: { '/api': 'http://localhost:8001' },
   },
   test: {
     environment: 'jsdom',
