@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom/vitest'
+import 'fake-indexeddb/auto'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { esquecerArquivoDoMapa } from '../components/mapa/arquivo'
 import { definirTokenAcesso } from '../lib/api'
+import { db } from '../lib/db'
 import { configurarMock, reiniciarBancoDoMock } from '../lib/mock'
 import { pmtilesFalso } from './utils'
 
@@ -11,9 +13,15 @@ vi.mock('maplibre-gl', () => import('./maplibre-falso'))
 vi.mock('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url', () => ({ default: '/worker.js' }))
 
 // O mock continua ativo nos testes (VITE_USAR_MOCK ausente = mock), só sem os 300ms.
-beforeEach(() => {
+beforeEach(async () => {
   configurarMock({ atrasoMs: 0 })
   reiniciarBancoDoMock()
+  await Promise.all([
+    db.categorias.clear(),
+    db.locais.clear(),
+    db.metadadosSync.clear(),
+    db.outbox.clear(),
+  ])
   esquecerArquivoDoMapa()
   // A única coisa que o app busca com fetch nos testes é o arquivo do mapa.
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (entrada) => {
