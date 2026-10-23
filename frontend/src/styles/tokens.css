@@ -85,3 +85,58 @@
     --mapa-eu: oklch(0.557 0.187 261.2);
   }
 }
+
+/* Tokens da UI Foundation. Os tokens legados acima permanecem para os componentes existentes. */
+:root {
+  color-scheme: light;
+
+  --ad-ocean-950: #062f35;
+  --ad-ocean-900: #073f47;
+  --ad-ocean-800: #07515b;
+  --ad-ocean-700: #076670;
+  --ad-ocean-600: #087b86;
+  --ad-ocean-500: #15919a;
+  --ad-ocean-100: #dff4f3;
+  --ad-ocean-50: #effafa;
+  --ad-mangrove-800: #284c3b;
+  --ad-mangrove-700: #356149;
+  --ad-mangrove-100: #e2eee7;
+  --ad-sand-50: #fbfaf6;
+  --ad-sand-100: #f4f0e6;
+  --ad-sand-200: #ebe3d2;
+  --ad-sun-500: #e39b30;
+  --ad-sun-100: #fbe7c5;
+  --ad-danger-700: #963d3d;
+  --ad-danger-100: #f9e4e2;
+  --ad-success-700: #2d6b4b;
+  --ad-success-100: #e0efe6;
+  --ad-ink-950: #15272b;
+  --ad-ink-800: #2d4146;
+  --ad-ink-600: #5c6f73;
+  --ad-ink-500: #728286;
+  --ad-white: #ffffff;
+  --ad-border: rgba(19, 64, 70, 0.12);
+  --ad-border-strong: rgba(19, 64, 70, 0.2);
+  --ad-shadow-sm: 0 1px 2px rgba(10, 45, 50, 0.06), 0 5px 18px rgba(10, 45, 50, 0.05);
+  --ad-shadow-md: 0 14px 38px rgba(10, 45, 50, 0.11);
+  --ad-shadow-lg: 0 24px 60px rgba(10, 45, 50, 0.16);
+  --ad-radius-sm: 10px;
+  --ad-radius-md: 16px;
+  --ad-radius-lg: 24px;
+  --ad-radius-xl: 30px;
+  --ad-radius-pill: 999px;
+  --ad-space-1: 0.25rem;
+  --ad-space-2: 0.5rem;
+  --ad-space-3: 0.75rem;
+  --ad-space-4: 1rem;
+  --ad-space-5: 1.25rem;
+  --ad-space-6: 1.5rem;
+  --ad-space-8: 2rem;
+  --ad-space-10: 2.5rem;
+  --ad-space-12: 3rem;
+  --ad-content: 1180px;
+  --ad-reading: 760px;
+  --ad-header-height: 72px;
+  --ad-tabbar-height: 72px;
+  --ad-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

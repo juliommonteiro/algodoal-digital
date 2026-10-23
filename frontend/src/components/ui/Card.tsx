@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from 'react'
 
 export interface CardProps extends HTMLAttributes<HTMLElement> {
-  as?: 'div' | 'article' | 'section' | 'li'
+  as?: 'div' | 'article' | 'section' | 'aside' | 'li'
 }
 
 /** Superfície branca-quente com borda e raio de card. Para card clicável, use a classe "card" num <Link>. */
