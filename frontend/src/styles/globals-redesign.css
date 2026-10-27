@@ -1,0 +1,96 @@
+@layer theme, base, components, utilities;
+
+/* Tailwind v4 sem Preflight: evita resetar as telas legadas durante o preview. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.65);
+  --radius-md: calc(var(--radius) * 0.82);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.75);
+  --radius-3xl: calc(var(--radius) * 2.15);
+}
+
+.algodoal-v2-root {
+  --radius: 0.9rem;
+  --background: oklch(0.974 0.01 92);
+  --foreground: oklch(0.19 0.025 210);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.025 210);
+  --primary: oklch(0.45 0.11 190);
+  --primary-foreground: oklch(0.99 0.004 190);
+  --secondary: oklch(0.95 0.025 180);
+  --secondary-foreground: oklch(0.28 0.06 190);
+  --muted: oklch(0.95 0.008 220);
+  --muted-foreground: oklch(0.52 0.03 220);
+  --accent: oklch(0.93 0.065 95);
+  --accent-foreground: oklch(0.30 0.05 80);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.90 0.012 210);
+  --input: oklch(0.90 0.012 210);
+  --ring: oklch(0.58 0.12 190);
+
+  min-width: 320px;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.algodoal-v2-root,
+.algodoal-v2-root *,
+.algodoal-v2-root *::before,
+.algodoal-v2-root *::after {
+  box-sizing: border-box;
+}
+
+.algodoal-v2-root button,
+.algodoal-v2-root a,
+.algodoal-v2-root input,
+.algodoal-v2-root select,
+.algodoal-v2-root textarea {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.algodoal-v2-root button,
+.algodoal-v2-root select {
+  cursor: pointer;
+}
+
+.algodoal-v2-root button:disabled {
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .algodoal-v2-root,
+  .algodoal-v2-root *,
+  .algodoal-v2-root *::before,
+  .algodoal-v2-root *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -13,16 +13,22 @@
   },
   "dependencies": {
     "@protomaps/basemaps": "^5.7.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "dexie": "^4.4.6",
+    "framer-motion": "^14.6.0",
+    "lucide-react": "^1.61.0",
     "maplibre-gl": "^6.11.2",
     "pmtiles": "^4.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router": "^8.4.0"
+    "react-router": "^8.4.0",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24.13.3",
@@ -32,6 +38,8 @@
     "fake-indexeddb": "^6.2.6",
     "jsdom": "^30.0.1",
     "oxlint": "^1.81.0",
+    "tailwindcss": "^4.3.3",
+    "tw-animate-css": "^1.4.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^1.3.0",

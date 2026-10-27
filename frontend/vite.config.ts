@@ -1,11 +1,14 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
+import path from 'node:path'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
@@ -84,10 +87,15 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, './src'),
+    },
+  },
   // O worker do MapLibre é um módulo ES (importa código compartilhado): empacota como ES.
   worker: { format: 'es' },
   server: {
-    proxy: { '/api': 'http://localhost:8000' },
+    proxy: { '/api': 'http://localhost:8001' },
   },
   test: {
     environment: 'jsdom',
