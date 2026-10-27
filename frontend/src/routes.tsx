@@ -12,6 +12,7 @@ import { LocalPage } from './pages/LocalPage'
 import { MapaPage } from './pages/MapaPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PassaportePage } from './pages/PassaportePage'
+import RedesignPreviewPage from './pages/RedesignPreviewPage'
 
 export const routes: RouteObject[] = [
   {
@@ -21,6 +22,7 @@ export const routes: RouteObject[] = [
       // Públicas e fora do layout de abas
       { path: 'entrar', element: <AcessoPage /> },
       { path: 'criar-conta', element: <CadastroPage /> },
+      { path: 'design-v2', element: <RedesignPreviewPage /> },
 
       // Painel administrativo: fora das abas (é desktop-first), carregado sob demanda e fora do
       // precache — o código dele não vai para o celular do turista. Quem não é admin volta ao
