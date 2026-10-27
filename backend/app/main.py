@@ -52,25 +52,36 @@ def create_app() -> FastAPI:
             response = await call_next(request)
         except Exception:
             duracao_ms = round((time.perf_counter() - inicio) * 1000, 2)
-            logger_http.exception(json.dumps({
-                "event": "http_request_failed",
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "duration_ms": duracao_ms,
-            }, ensure_ascii=False))
+            logger_http.exception(
+                json.dumps(
+                    {
+                        "event": "http_request_failed",
+                        "request_id": request_id,
+                        "method": request.method,
+                        "path": request.url.path,
+                        "duration_ms": duracao_ms,
+                    },
+                    ensure_ascii=False,
+                )
+            )
             raise
         duracao_ms = round((time.perf_counter() - inicio) * 1000, 2)
         response.headers["X-Request-ID"] = request_id
-        logger_http.info(json.dumps({
-            "event": "http_request_complete",
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "status": response.status_code,
-            "duration_ms": duracao_ms,
-        }, ensure_ascii=False))
+        logger_http.info(
+            json.dumps(
+                {
+                    "event": "http_request_complete",
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status": response.status_code,
+                    "duration_ms": duracao_ms,
+                },
+                ensure_ascii=False,
+            )
+        )
         return response
+
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, ao_estourar_limite)
     app.include_router(api_router, prefix=settings.api_prefix)
