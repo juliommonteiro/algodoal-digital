@@ -2,10 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
-import { aquecerCacheDoCatalogo } from './lib/cacheDoCatalogo'
-import { api } from './lib/cliente'
+import { iniciarSyncManager } from './lib/sync/syncManager'
 
-aquecerCacheDoCatalogo(() => Promise.all([api.categorias(), api.locais()]))
+iniciarSyncManager()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

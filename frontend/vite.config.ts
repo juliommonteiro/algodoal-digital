@@ -80,28 +80,6 @@ export default defineConfig({
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            // Catálogo (lista de locais, detalhe de um local e categorias): os marcadores do mapa,
-            // a lista e o detalhe sobrevivem a uma queda de rede. StaleWhileRevalidate responde do cache na hora e
-            // atualiza em segundo plano quando há conexão — a versão nova aparece na carga
-            // seguinte. Casa só pelo caminho: em produção a API pode estar em outra origem
-            // (VITE_API_URL). Só 200 entra no cache, para um erro não substituir dado bom.
-            //
-            // ATENÇÃO: isto NÃO é a sincronização offline da S8. A S8 continua por fazer:
-            // IndexedDB (Dexie) com o catálogo, pull incremental por `since` e a fila Outbox de
-            // eventos (docs/arquitetura.md). Aqui é só cache HTTP de duas respostas inteiras.
-            urlPattern: ({ url }) =>
-              /^\/api\/v1\/(categories|places(\/[0-9a-f-]{36})?)$/.test(url.pathname),
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'algodoal-catalogo-v1',
-              // Uma entrada por local aberto, mais a lista e as categorias.
-              expiration: { maxEntries: 500, maxAgeSeconds: 7 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [200] },
-            },
-          },
-        ],
       },
       devOptions: { enabled: false },
     }),
@@ -113,6 +91,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    fileParallelism: false,
     // Os testes sempre usam o mock, mesmo que o .env local de quem roda aponte para a API
     // real (VITE_USAR_MOCK=false): sem isso, a suíte depende de um backend no ar.
     env: { VITE_USAR_MOCK: 'true' },
