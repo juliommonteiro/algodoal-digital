@@ -207,7 +207,10 @@ export const clienteAdminMock: ClienteAdmin = {
   remover(localId) {
     const local = bancoDoMock().locais.find((l) => l.id === localId)
     if (!local) return falhar(404, 'Local não encontrado.')
-    local.deleted_at ??= new Date().toISOString()
+    if (!local.deleted_at) {
+      local.deleted_at = new Date().toISOString()
+      local.updated_at = local.deleted_at
+    }
     return responder(local)
   },
 
@@ -215,6 +218,7 @@ export const clienteAdminMock: ClienteAdmin = {
     const local = bancoDoMock().locais.find((l) => l.id === localId)
     if (!local) return falhar(404, 'Local não encontrado.')
     local.deleted_at = null
+    local.updated_at = new Date().toISOString()
     return responder(local)
   },
 

@@ -178,6 +178,18 @@ export interface ClienteParceiro {
   atualizar(id: string, mudancas: NegocioDoParceiroEntrada): Promise<Local>
 }
 
+/** GET /sync/catalog (#28). Backend: CatalogoSync. */
+export interface CatalogoSync {
+  /** Volta como `since` na próxima chamada (hora do servidor, não do celular). */
+  server_time: string
+  /** true: catálogo inteiro (troca tudo); false: só o que mudou (aplica por cima). */
+  full: boolean
+  categories: Categoria[]
+  places: Local[]
+  /** Removidos ou despublicados desde `since`: sair do aparelho. */
+  removed_place_ids: string[]
+}
+
 /** O que o cliente real (api.ts) e o mock (mock.ts) implementam. */
 export interface ClienteApi {
   registrar(
@@ -192,6 +204,8 @@ export interface ClienteApi {
   categorias(): Promise<Categoria[]>
   locais(filtros?: FiltrosLocais): Promise<Local[]>
   local(id: string): Promise<Local>
+  /** Sem `since`, o catálogo inteiro; com `since`, só o que mudou desde então. */
+  catalogo(since?: string): Promise<CatalogoSync>
 }
 
 // ---------------------------------------------------------------------------

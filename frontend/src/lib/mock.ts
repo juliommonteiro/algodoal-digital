@@ -521,4 +521,24 @@ export const clienteMock: ClienteApi = {
     const encontrado = banco().locais.find((l) => l.id === id && visivelAoPublico(l))
     return encontrado ? responder(publico(encontrado)) : falhar(404, 'Local não encontrado.')
   },
+
+  // Mesma regra da API (services/catalog.py, mudancas_do_catalogo), com a mesma margem.
+  catalogo(since) {
+    const { categorias, locais } = banco()
+    const server_time = new Date().toISOString()
+    const ordenados = [...locais].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    if (!since) {
+      const places = ordenados.filter(visivelAoPublico).map(publico)
+      return responder({ server_time, full: true, categories: categorias, places, removed_place_ids: [] })
+    }
+    const corte = Date.parse(since) - 60_000
+    const alterados = ordenados.filter((l) => Date.parse(l.updated_at) > corte)
+    return responder({
+      server_time,
+      full: false,
+      categories: categorias,
+      places: alterados.filter(visivelAoPublico).map(publico),
+      removed_place_ids: alterados.filter((l) => !visivelAoPublico(l)).map((l) => l.id),
+    })
+  },
 }

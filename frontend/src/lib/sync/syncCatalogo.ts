@@ -3,11 +3,15 @@ import { logEstruturado } from '../observabilidade'
 import { catalogoRepository, type CatalogoRepository } from '../repositories/catalogoRepository'
 import type { ClienteApi } from '../tipos'
 
-export type ClienteCatalogo = Pick<ClienteApi, 'categorias' | 'locais'>
+export type ClienteCatalogo = Pick<ClienteApi, 'catalogo'>
 
 export interface ResultadoSyncCatalogo {
+  /** true: veio o catálogo inteiro; false: só o que mudou desde o último pull. */
+  completo: boolean
   categorias: number
+  /** Locais que vieram nesta resposta (todos, se completo). */
   locais: number
+  removidos: number
   sincronizadoEm: string
   duracaoMs: number
 }
@@ -31,14 +35,39 @@ export class CatalogSyncService {
     return execucao
   }
 
+  /**
+   * Pull do catálogo (#28, GET /sync/catalog). Com cursor e conteúdo no aparelho, pede só o que
+   * mudou; sem eles (primeira vez, banco limpo), pede o inteiro e troca tudo.
+   */
   private async executar(): Promise<ResultadoSyncCatalogo> {
     const inicio = performance.now()
-    const [categorias, locais] = await Promise.all([this.cliente.categorias(), this.cliente.locais()])
+    const [cursor, temConteudo] = await Promise.all([
+      this.repository.cursor(),
+      this.repository.temConteudo(),
+    ])
+    const resposta = await this.cliente.catalogo(cursor && temConteudo ? cursor : undefined)
     const sincronizadoEm = new Date().toISOString()
-    await this.repository.substituirSnapshot(categorias, locais, sincronizadoEm)
+    if (resposta.full) {
+      await this.repository.substituirSnapshot(
+        resposta.categories,
+        resposta.places,
+        sincronizadoEm,
+        resposta.server_time,
+      )
+    } else {
+      await this.repository.aplicarMudancas(
+        resposta.categories,
+        resposta.places,
+        resposta.removed_place_ids,
+        sincronizadoEm,
+        resposta.server_time,
+      )
+    }
     const resultado = {
-      categorias: categorias.length,
-      locais: locais.length,
+      completo: resposta.full,
+      categorias: resposta.categories.length,
+      locais: resposta.places.length,
+      removidos: resposta.removed_place_ids.length,
       sincronizadoEm,
       duracaoMs: Math.round(performance.now() - inicio),
     }

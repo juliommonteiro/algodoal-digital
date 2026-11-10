@@ -1,8 +1,10 @@
 """Catálogo público: categorias e locais, só leitura (escrita é do painel admin, S6)."""
 
 import uuid
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
-from sqlalchemy import CTE, Select, select
+from sqlalchemy import CTE, Select, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Category, Place
@@ -66,3 +68,44 @@ def listar_locais(
 def obter_local(db: Session, place_id: uuid.UUID) -> Place | None:
     """Um local publicado, com negócio e fotos; None se não existe, não publicado ou removido."""
     return db.scalar(_com_negocio_e_fotos(_visiveis().where(Place.id == place_id)))
+
+
+# Volta este tanto antes do `since`: uma gravação que começou antes da última consulta e terminou
+# depois dela tem updated_at anterior ao server_time devolvido. Reaplicar o que não mudou não faz
+# mal no celular (upsert por id).
+MARGEM_DO_SYNC = timedelta(minutes=1)
+
+
+@dataclass
+class MudancasDoCatalogo:
+    server_time: datetime
+    full: bool
+    categorias: list[Category]
+    locais: list[Place]
+    removidos: list[uuid.UUID]
+
+
+def mudancas_do_catalogo(db: Session, since: datetime | None) -> MudancasDoCatalogo:
+    """Sem `since`, o catálogo público inteiro. Com `since`, os publicados alterados desde então
+    e os ids dos que saíram do público (removidos ou despublicados) no mesmo período.
+
+    "Alterado" inclui negócio e fotos: os triggers da migração a33968362746 tocam o local.
+    """
+    # Hora do banco, não do servidor da API: é com ela que o updated_at foi gravado.
+    server_time = db.scalar(select(func.now()))
+    categorias = listar_categorias(db)
+    if since is None:
+        return MudancasDoCatalogo(server_time, True, categorias, listar_locais(db), [])
+    corte = since - MARGEM_DO_SYNC
+    alterados = _com_negocio_e_fotos(_visiveis().where(Place.updated_at > corte))
+    saidos = select(Place.id).where(
+        Place.updated_at > corte,
+        or_(Place.is_published.is_(False), Place.deleted_at.is_not(None)),
+    )
+    return MudancasDoCatalogo(
+        server_time,
+        False,
+        categorias,
+        list(db.scalars(alterados.order_by(Place.name, Place.id))),
+        list(db.scalars(saidos)),
+    )
