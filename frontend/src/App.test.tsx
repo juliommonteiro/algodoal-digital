@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { ErroApi } from './lib/api'
 import { clienteMock } from './lib/mock'
 import { renderizarEm, simularSessao } from './test/utils'
 
@@ -110,6 +111,98 @@ describe('cadastro', () => {
     expect(screen.getByText(/não parece válido/)).toBeInTheDocument()
     expect(screen.getByText('A senha precisa ter pelo menos 8 caracteres.')).toBeInTheDocument()
     expect(screen.getByText('As senhas não são iguais.')).toBeInTheDocument()
+  })
+
+  function preencherConta(email: string) {
+    fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Bento da Carroça' } })
+    fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: email } })
+    fireEvent.change(screen.getByLabelText(/^Senha/), { target: { value: 'senha-segura' } })
+    fireEvent.change(screen.getByLabelText('Repita a senha'), { target: { value: 'senha-segura' } })
+  }
+
+  it('campos de carroceiro só aparecem com a opção marcada', () => {
+    renderizarEm('/criar-conta')
+
+    expect(screen.queryByLabelText('WhatsApp com DDD')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Sou carroceiro e quero receber pedidos'))
+
+    expect(screen.getByLabelText('WhatsApp com DDD')).toBeInTheDocument()
+    expect(screen.getByLabelText('Quantas pessoas cabem na carroça')).toHaveValue(2)
+  })
+
+  it('carroceiro sem WhatsApp válido não é enviado e o foco vai para o campo', () => {
+    const registrar = vi.spyOn(clienteMock, 'registrar')
+    renderizarEm('/criar-conta')
+    preencherConta('bento@example.com')
+    fireEvent.click(screen.getByLabelText('Sou carroceiro e quero receber pedidos'))
+    fireEvent.change(screen.getByLabelText('WhatsApp com DDD'), { target: { value: '98888-7777' } })
+    fireEvent.change(screen.getByLabelText('Quantas pessoas cabem na carroça'), {
+      target: { value: '0' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+
+    expect(screen.getByText(/WhatsApp com DDD, por exemplo/)).toBeInTheDocument()
+    expect(screen.getByText('Informe quantas pessoas cabem, de 1 a 12.')).toBeInTheDocument()
+    expect(screen.getByLabelText('WhatsApp com DDD')).toHaveFocus()
+    expect(registrar).not.toHaveBeenCalled()
+  })
+
+  it('carroceiro cria a conta com o perfil e cai na área do carroceiro', async () => {
+    const registrar = vi.spyOn(clienteMock, 'registrar')
+    const router = renderizarEm('/criar-conta')
+    preencherConta('bento.novo@example.com')
+    fireEvent.click(screen.getByLabelText('Sou carroceiro e quero receber pedidos'))
+    fireEvent.change(screen.getByLabelText('WhatsApp com DDD'), {
+      target: { value: '(91) 98888-7777' },
+    })
+    fireEvent.change(screen.getByLabelText('Quantas pessoas cabem na carroça'), {
+      target: { value: '5' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+
+    expect(await screen.findByRole('heading', { name: 'Painel do carroceiro' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/carroceiro')
+    expect(screen.getByText(/Seu perfil de carroceiro está ativo/)).toBeInTheDocument()
+    expect(registrar).toHaveBeenCalledWith(
+      'Bento da Carroça',
+      'bento.novo@example.com',
+      'senha-segura',
+      { whatsapp: '(91) 98888-7777', capacity: 5 },
+    )
+  })
+
+  it('turista continua indo para o mapa, sem perfil de carroceiro', async () => {
+    const registrar = vi.spyOn(clienteMock, 'registrar')
+    const router = renderizarEm('/criar-conta')
+    preencherConta('ana.nova@example.com')
+    fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    expect(registrar).toHaveBeenCalledWith(
+      'Bento da Carroça',
+      'ana.nova@example.com',
+      'senha-segura',
+      undefined,
+    )
+  })
+
+  it('erro da API no WhatsApp aparece no campo, não como erro geral', async () => {
+    vi.spyOn(clienteMock, 'registrar').mockRejectedValueOnce(
+      new ErroApi(422, 'Informe o WhatsApp com DDD, por exemplo (91) 98888-7777.', {
+        'carrier.whatsapp': 'Informe o WhatsApp com DDD, por exemplo (91) 98888-7777.',
+      }),
+    )
+    renderizarEm('/criar-conta')
+    preencherConta('bento.api@example.com')
+    fireEvent.click(screen.getByLabelText('Sou carroceiro e quero receber pedidos'))
+    fireEvent.change(screen.getByLabelText('WhatsApp com DDD'), {
+      target: { value: '(91) 98888-7777' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
+
+    await waitFor(() => expect(screen.getByLabelText('WhatsApp com DDD')).toHaveFocus())
+    expect(screen.getByLabelText('WhatsApp com DDD')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
 

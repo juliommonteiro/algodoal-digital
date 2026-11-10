@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Usuario } from '../lib/tipos'
+import type { DadosCarroceiro, Usuario } from '../lib/tipos'
 
 export interface ValorAuth {
   /** Usuário da sessão local; existe mesmo offline, sem ter falado com o servidor. */
@@ -7,7 +7,13 @@ export interface ValorAuth {
   /** true enquanto um entrar/registrar está em andamento. A renovação em segundo plano não conta. */
   carregando: boolean
   entrar(email: string, senha: string): Promise<Usuario>
-  registrar(nome: string, email: string, senha: string): Promise<Usuario>
+  /** Com `carroceiro`, a conta nasce com perfil de carroceiro. */
+  registrar(
+    nome: string,
+    email: string,
+    senha: string,
+    carroceiro?: DadosCarroceiro,
+  ): Promise<Usuario>
   sair(): void
 }
 

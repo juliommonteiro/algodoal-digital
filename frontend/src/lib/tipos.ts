@@ -20,6 +20,16 @@ export interface Usuario {
   role: Perfil
 }
 
+/**
+ * Perfil de carroceiro enviado no cadastro (`carrier` em POST /auth/register). Com ele a conta
+ * nasce carroceiro, já aprovada; sem ele, turista. Backend: CarroceiroIn.
+ */
+export interface DadosCarroceiro {
+  whatsapp: string
+  /** Pessoas por viagem, de 1 a 12. */
+  capacity: number
+}
+
 export interface Categoria {
   id: string
   slug: string
@@ -77,7 +87,12 @@ export interface FiltrosLocais {
 
 /** O que o cliente real (api.ts) e o mock (mock.ts) implementam. */
 export interface ClienteApi {
-  registrar(nome: string, email: string, senha: string): Promise<RespostaLogin>
+  registrar(
+    nome: string,
+    email: string,
+    senha: string,
+    carroceiro?: DadosCarroceiro,
+  ): Promise<RespostaLogin>
   entrar(email: string, senha: string): Promise<RespostaLogin>
   renovar(refreshToken: string): Promise<RespostaLogin>
   eu(): Promise<Usuario>

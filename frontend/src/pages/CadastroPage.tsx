@@ -8,17 +8,33 @@ import { Campo } from '../components/ui/Campo'
 import { Card } from '../components/ui/Card'
 import { ErroApi } from '../lib/api'
 import {
+  CAPACIDADE_MAXIMA,
+  erroCapacidade,
   erroConfirmacao,
   erroEmail,
   erroNome,
   erroSenhaNova,
+  erroWhatsApp,
   primeiroComErro,
   SENHA_MINIMA,
   type ErrosDe,
 } from '../lib/validacao'
 
-type CampoCadastro = 'nome' | 'email' | 'senha' | 'confirmacao'
-const ORDEM: readonly CampoCadastro[] = ['nome', 'email', 'senha', 'confirmacao']
+type CampoCadastro = 'nome' | 'email' | 'senha' | 'confirmacao' | 'whatsapp' | 'capacidade'
+const ORDEM: readonly CampoCadastro[] = [
+  'nome',
+  'email',
+  'senha',
+  'confirmacao',
+  'whatsapp',
+  'capacidade',
+]
+
+// Erro de validação da API (422) no perfil de carroceiro: "carrier.whatsapp" → campo do formulário.
+const CAMPOS_DA_API: Record<string, CampoCadastro> = {
+  'carrier.whatsapp': 'whatsapp',
+  'carrier.capacity': 'capacidade',
+}
 
 export function CadastroPage() {
   const { usuario, registrar, carregando } = useAuth()
@@ -28,15 +44,32 @@ export function CadastroPage() {
     email: '',
     senha: '',
     confirmacao: '',
+    whatsapp: '',
+    capacidade: '2',
   })
+  const [carroceiro, setCarroceiro] = useState(false)
   const [erros, setErros] = useState<ErrosDe<CampoCadastro>>({})
   const [erroGeral, setErroGeral] = useState<string | null>(null)
   const refNome = useRef<HTMLInputElement>(null)
   const refEmail = useRef<HTMLInputElement>(null)
   const refSenha = useRef<HTMLInputElement>(null)
   const refConfirmacao = useRef<HTMLInputElement>(null)
+  const refWhatsApp = useRef<HTMLInputElement>(null)
+  const refCapacidade = useRef<HTMLInputElement>(null)
+  const refs = {
+    nome: refNome,
+    email: refEmail,
+    senha: refSenha,
+    confirmacao: refConfirmacao,
+    whatsapp: refWhatsApp,
+    capacidade: refCapacidade,
+  }
 
-  if (usuario) return <Navigate to={destinoAposLogin(local.state)} replace />
+  // Carroceiro recém-cadastrado vai para a área dele, a menos que viesse de outra rota.
+  if (usuario) {
+    const padrao = usuario.role === 'carrier' ? '/carroceiro' : '/'
+    return <Navigate to={destinoAposLogin(local.state, padrao)} replace />
+  }
 
   function alterar(campo: CampoCadastro, valor: string) {
     setValores((atuais) => ({ ...atuais, [campo]: valor }))
@@ -53,23 +86,47 @@ export function CadastroPage() {
       ['senha', erroSenhaNova(valores.senha)],
       ['confirmacao', erroConfirmacao(valores.senha, valores.confirmacao)],
     ]
+    if (carroceiro) {
+      checagens.push(
+        ['whatsapp', erroWhatsApp(valores.whatsapp)],
+        ['capacidade', erroCapacidade(valores.capacidade)],
+      )
+    }
     for (const [campo, erro] of checagens) if (erro) novos[campo] = erro
     setErros(novos)
 
     const primeiro = primeiroComErro(ORDEM, novos)
     if (primeiro) {
-      const refs = { nome: refNome, email: refEmail, senha: refSenha, confirmacao: refConfirmacao }
       refs[primeiro].current?.focus()
       return
     }
 
     try {
-      await registrar(valores.nome.trim(), valores.email.trim(), valores.senha)
+      await registrar(
+        valores.nome.trim(),
+        valores.email.trim(),
+        valores.senha,
+        carroceiro
+          ? { whatsapp: valores.whatsapp.trim(), capacity: Number(valores.capacidade) }
+          : undefined,
+      )
     } catch (erro) {
       if (erro instanceof ErroApi && erro.status === 409) {
         setErros({ email: erro.mensagem })
         refEmail.current?.focus()
         return
+      }
+      if (erro instanceof ErroApi && erro.status === 422) {
+        const daApi: ErrosDe<CampoCadastro> = {}
+        for (const [caminho, campo] of Object.entries(CAMPOS_DA_API)) {
+          if (erro.campos[caminho]) daApi[campo] = erro.campos[caminho]
+        }
+        const primeiroDaApi = primeiroComErro(ORDEM, daApi)
+        if (primeiroDaApi) {
+          setErros(daApi)
+          refs[primeiroDaApi].current?.focus()
+          return
+        }
       }
       setErroGeral(erro instanceof ErroApi ? erro.mensagem : 'Não foi possível criar a conta agora.')
     }
@@ -127,6 +184,53 @@ export function CadastroPage() {
             onChange={(ev) => alterar('confirmacao', ev.target.value)}
             erro={erros.confirmacao}
           />
+
+          <div className="cadastro__opcao">
+            <input
+              id="cadastro-carroceiro"
+              type="checkbox"
+              className="cadastro__caixa"
+              checked={carroceiro}
+              onChange={(ev) => setCarroceiro(ev.target.checked)}
+              aria-describedby="cadastro-carroceiro-dica"
+            />
+            <label htmlFor="cadastro-carroceiro" className="cadastro__rotulo">
+              Sou carroceiro e quero receber pedidos
+            </label>
+            <p id="cadastro-carroceiro-dica" className="cadastro__dica">
+              Seu perfil de carroceiro fica ativo na hora, sem aprovação.
+            </p>
+          </div>
+
+          {carroceiro && (
+            <>
+              <Campo
+                ref={refWhatsApp}
+                label="WhatsApp com DDD"
+                type="tel"
+                name="whatsapp"
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="(91) 98888-7777"
+                value={valores.whatsapp}
+                onChange={(ev) => alterar('whatsapp', ev.target.value)}
+                erro={erros.whatsapp}
+              />
+              <Campo
+                ref={refCapacidade}
+                label="Quantas pessoas cabem na carroça"
+                type="number"
+                name="capacidade"
+                inputMode="numeric"
+                min={1}
+                max={CAPACIDADE_MAXIMA}
+                value={valores.capacidade}
+                onChange={(ev) => alterar('capacidade', ev.target.value)}
+                erro={erros.capacidade}
+              />
+            </>
+          )}
+
           <Botao type="submit" className="botao--largo" carregando={carregando}>
             Criar conta
           </Botao>

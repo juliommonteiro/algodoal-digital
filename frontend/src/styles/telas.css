@@ -482,6 +482,33 @@
   margin-top: var(--e-1);
 }
 
+/* Opção "Sou carroceiro" no cadastro: caixa grande para o toque, dica embaixo do rótulo. */
+.cadastro__opcao {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--e-3);
+  row-gap: var(--e-1);
+  padding: var(--e-3);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+.cadastro__caixa {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--verde);
+}
+.cadastro__rotulo {
+  font-weight: 600;
+}
+.cadastro__dica {
+  grid-column: 2;
+  margin: 0;
+  font-size: 14px;
+  color: var(--suave);
+}
+
 .aviso-erro {
   padding: var(--e-3);
   border-left: 4px solid var(--terracota);

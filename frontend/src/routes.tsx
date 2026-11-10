@@ -63,7 +63,7 @@ export const routes: RouteObject[] = [
                 element: (
                   <EmBrevePage
                     titulo="Painel do carroceiro"
-                    frase="Receber, aceitar e recusar pedidos de carroça chega na S10."
+                    frase="Seu perfil de carroceiro está ativo. Receber, aceitar e recusar pedidos de carroça chega na S10."
                   />
                 ),
               },

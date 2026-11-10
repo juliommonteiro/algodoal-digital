@@ -174,8 +174,13 @@ function consulta(filtros?: FiltrosLocais): string {
 }
 
 export const clienteHttp: ClienteApi = {
-  registrar: (nome, email, senha) =>
-    requisitar<RespostaLogin>('POST', '/auth/register', { name: nome, email, password: senha }),
+  registrar: (nome, email, senha, carroceiro) =>
+    requisitar<RespostaLogin>('POST', '/auth/register', {
+      name: nome,
+      email,
+      password: senha,
+      ...(carroceiro ? { carrier: carroceiro } : {}),
+    }),
   entrar: (email, senha) =>
     requisitar<RespostaLogin>('POST', '/auth/login', { email, password: senha }),
   renovar: (refreshToken) =>

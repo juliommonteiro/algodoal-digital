@@ -29,7 +29,8 @@ from app.core.security import (
     montar_par,
     verificar_senha,
 )
-from app.models import RefreshToken, User
+from app.models import Carrier, RefreshToken, User
+from app.schemas.auth import CarroceiroIn
 
 logger = logging.getLogger(__name__)
 
@@ -95,12 +96,25 @@ def _abrir_sessao(db: Session, user: User) -> tuple[ParDeTokens, RefreshToken]:
     return _par_da_sessao(user, sessao), sessao
 
 
-def registrar(db: Session, *, nome: str, email: str, senha: str) -> ParDeTokens:
-    """Cria um turista e já devolve a sessão aberta."""
+def registrar(
+    db: Session, *, nome: str, email: str, senha: str, carroceiro: CarroceiroIn | None = None
+) -> ParDeTokens:
+    """Cria um turista, ou um carroceiro com o perfil já ativo, e devolve a sessão aberta."""
     email = _normalizar_email(email)
     if db.scalar(select(exists().where(User.email == email))):
         raise EmailJaCadastrado
-    user = User(name=nome, email=email, password_hash=gerar_hash(senha), role="tourist")
+    perfil = "carrier" if carroceiro else "tourist"
+    user = User(name=nome, email=email, password_hash=gerar_hash(senha), role=perfil)
+    if carroceiro:
+        # Disponível desde o cadastro: quem se cadastra quer receber pedidos. Pausar fica na
+        # tela do carroceiro (#33).
+        user.carrier = Carrier(
+            display_name=nome,
+            whatsapp=carroceiro.whatsapp,
+            capacity=carroceiro.capacity,
+            is_available=True,
+            is_approved=True,
+        )
     db.add(user)
     try:
         db.flush()
