@@ -28,6 +28,25 @@ export function erroConfirmacao(senha: string, confirmacao: string): string | nu
   return null
 }
 
+/** Mesma regra da API (CarroceiroIn): com DDD, ou já com o 55 do Brasil. */
+export function erroWhatsApp(whatsapp: string): string | null {
+  const digitos = whatsapp.replace(/\D/g, '')
+  if (!digitos) return 'Informe seu WhatsApp: é por ele que o turista fala com você.'
+  const nacional = digitos.length === 10 || digitos.length === 11
+  const comPais = (digitos.length === 12 || digitos.length === 13) && digitos.startsWith('55')
+  return nacional || comPais ? null : 'Informe o WhatsApp com DDD, por exemplo (91) 98888-7777.'
+}
+
+export const CAPACIDADE_MAXIMA = 12
+
+export function erroCapacidade(capacidade: string): string | null {
+  const numero = Number(capacidade)
+  if (!capacidade.trim() || !Number.isInteger(numero) || numero < 1 || numero > CAPACIDADE_MAXIMA) {
+    return `Informe quantas pessoas cabem, de 1 a ${CAPACIDADE_MAXIMA}.`
+  }
+  return null
+}
+
 export function erroNome(nome: string): string | null {
   if (!nome.trim()) return 'Informe seu nome.'
   if (nome.trim().length < 2) return 'O nome precisa ter pelo menos 2 letras.'

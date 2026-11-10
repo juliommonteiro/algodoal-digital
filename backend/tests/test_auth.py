@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from app.api.deps import requer_perfil
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models import RefreshToken, User
+from app.models import Carrier, RefreshToken, User
 from app.services import auth as servico
 from tests.conftest import precisa_de_banco
 
@@ -111,6 +111,105 @@ def test_senha_com_menos_de_8_caracteres_devolve_422(api, senha):
 
     assert resposta.status_code == 422
     assert resposta.json()["detail"][0]["loc"] == ["body", "password"]
+
+
+def registrar_carroceiro(api, carroceiro: dict[str, Any], email: str | None = None):
+    return api.post(
+        "/api/v1/auth/register",
+        json={
+            "name": "Bento da Carroça",
+            "email": email or email_unico(),
+            "password": SENHA,
+            "carrier": carroceiro,
+        },
+    )
+
+
+def test_registro_com_carrier_cria_carroceiro_ja_aprovado_e_disponivel(db, api):
+    email = email_unico()
+    resposta = registrar_carroceiro(api, {"whatsapp": "(91) 98888-7777", "capacity": 6}, email)
+
+    assert resposta.status_code == 201, resposta.text
+    assert resposta.json()["user"]["role"] == "carrier"
+    usuario = db.scalar(select(User).where(User.email == email))
+    perfil = db.scalar(select(Carrier).where(Carrier.user_id == usuario.id))
+    assert (perfil.display_name, perfil.whatsapp, perfil.capacity) == (
+        "Bento da Carroça",
+        "(91) 98888-7777",
+        6,
+    )
+    # Sem lista fechada: quem se cadastra já pode receber pedidos.
+    assert perfil.is_approved is True
+    assert perfil.is_available is True
+
+    # A sessão devolvida já é de carroceiro (rotas por perfil, como /carroceiro).
+    token = resposta.json()["access_token"]
+    assert eu(api, token).json()["role"] == "carrier"
+
+
+def test_registro_de_carroceiro_sem_capacidade_usa_duas_pessoas(db, api):
+    email = email_unico()
+    assert registrar_carroceiro(api, {"whatsapp": "91988887777"}, email).status_code == 201
+
+    usuario = db.scalar(select(User).where(User.email == email))
+    assert db.scalar(select(Carrier.capacity).where(Carrier.user_id == usuario.id)) == 2
+
+
+def test_registro_sem_carrier_continua_turista_sem_perfil_de_carroceiro(db, api):
+    email = email_unico()
+    assert registrar(api, email).status_code == 201
+
+    usuario = db.scalar(select(User).where(User.email == email))
+    assert usuario.role == "tourist"
+    assert db.scalar(select(Carrier).where(Carrier.user_id == usuario.id)) is None
+
+
+@pytest.mark.parametrize("perfil", ["admin", "partner", "carrier"])
+def test_perfil_no_corpo_do_registro_e_ignorado(db, api, perfil):
+    email = email_unico()
+    resposta = api.post(
+        "/api/v1/auth/register",
+        json={"name": "Esperto", "email": email, "password": SENHA, "role": perfil},
+    )
+
+    assert resposta.status_code == 201
+    assert resposta.json()["user"]["role"] == "tourist"
+    assert db.scalar(select(User.role).where(User.email == email)) == "tourist"
+
+
+@pytest.mark.parametrize(
+    ("carroceiro", "campo"),
+    [
+        ({"whatsapp": "98888-7777"}, "whatsapp"),  # sem DDD
+        ({"whatsapp": ""}, "whatsapp"),
+        ({"whatsapp": "(91) 98888-7777", "capacity": 0}, "capacity"),
+        ({"whatsapp": "(91) 98888-7777", "capacity": 13}, "capacity"),
+        ({"capacity": 4}, "whatsapp"),
+    ],
+)
+def test_carroceiro_com_dados_invalidos_devolve_422_e_nao_cria_conta(db, api, carroceiro, campo):
+    email = email_unico()
+    resposta = registrar_carroceiro(api, carroceiro, email)
+
+    assert resposta.status_code == 422
+    assert resposta.json()["detail"][0]["loc"] == ["body", "carrier", campo]
+    assert db.scalar(select(User).where(User.email == email)) is None
+
+
+def test_whatsapp_invalido_explica_o_formato(api):
+    resposta = registrar_carroceiro(api, {"whatsapp": "123"})
+
+    assert resposta.json()["detail"][0]["msg"] == (
+        "Informe o WhatsApp com DDD, por exemplo (91) 98888-7777."
+    )
+
+
+def test_carrier_nao_aceita_campos_de_aprovacao_vindos_do_cliente(api):
+    resposta = registrar_carroceiro(
+        api, {"whatsapp": "(91) 98888-7777", "is_approved": False, "is_available": False}
+    )
+
+    assert resposta.status_code == 422
 
 
 # ---------------------------------------------------------------------------- login

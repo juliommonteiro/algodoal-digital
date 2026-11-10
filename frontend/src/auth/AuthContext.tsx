@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { definirTokenAcesso, ErroApi, obterTokenAcesso } from '../lib/api'
 import { api } from '../lib/cliente'
-import type { RespostaLogin, Usuario } from '../lib/tipos'
+import type { DadosCarroceiro, RespostaLogin, Usuario } from '../lib/tipos'
 import { AuthContexto, type ValorAuth } from './contexto'
 import { apagarSessao, CHAVE_SESSAO, gravarSessao, lerSessao, type SessaoSalva } from './sessao'
 
@@ -92,10 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const registrar = useCallback(
-    async (nome: string, email: string, senha: string) => {
+    async (nome: string, email: string, senha: string, carroceiro?: DadosCarroceiro) => {
       setCarregando(true)
       try {
-        return aplicar(await api.registrar(nome, email, senha))
+        return aplicar(await api.registrar(nome, email, senha, carroceiro))
       } finally {
         setCarregando(false)
       }

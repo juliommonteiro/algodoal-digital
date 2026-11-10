@@ -379,7 +379,7 @@ function buscarPorEmail(email: string): Usuario | undefined {
 // ---------------------------------------------------------------------------
 
 export const clienteMock: ClienteApi = {
-  registrar(nome, email, senha) {
+  registrar(nome, email, senha, carroceiro) {
     if (buscarPorEmail(email)) return falhar(409, 'Já existe uma conta com esse e-mail.')
     if (senha.length < SENHA_MINIMA) {
       return falhar(422, `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`)
@@ -388,7 +388,7 @@ export const clienteMock: ClienteApi = {
       id: crypto.randomUUID(),
       name: nome.trim(),
       email: email.trim().toLowerCase(),
-      role: 'tourist',
+      role: carroceiro ? 'carrier' : 'tourist',
     }
     cadastrados.push(usuario)
     return responder(sessao(usuario))

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ErroApi, requisitar } from './api'
+import { clienteHttp, ErroApi, requisitar } from './api'
 
 function responderCom(status: number, corpo: unknown) {
   vi.mocked(fetch).mockResolvedValueOnce(
@@ -56,5 +56,36 @@ describe('erros da API', () => {
       '/api/v1/admin/places/1',
       expect.objectContaining({ method: 'PATCH', body: '{"name":"Novo"}' }),
     )
+  })
+})
+
+describe('cadastro', () => {
+  function corpoEnviado(): unknown {
+    const [, opcoes] = vi.mocked(fetch).mock.calls.at(-1)!
+    return JSON.parse(String(opcoes?.body))
+  }
+
+  it('turista vai sem `carrier`', async () => {
+    responderCom(201, {})
+
+    await clienteHttp.registrar('Ana', 'ana@example.com', 'senha-segura')
+
+    expect(corpoEnviado()).toEqual({ name: 'Ana', email: 'ana@example.com', password: 'senha-segura' })
+  })
+
+  it('carroceiro vai com `carrier` e nunca com `role`', async () => {
+    responderCom(201, {})
+
+    await clienteHttp.registrar('Bento', 'bento@example.com', 'senha-segura', {
+      whatsapp: '(91) 98888-7777',
+      capacity: 4,
+    })
+
+    expect(corpoEnviado()).toEqual({
+      name: 'Bento',
+      email: 'bento@example.com',
+      password: 'senha-segura',
+      carrier: { whatsapp: '(91) 98888-7777', capacity: 4 },
+    })
   })
 })

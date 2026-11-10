@@ -40,7 +40,7 @@ def _nao_autenticado(detalhe: str) -> HTTPException:
 @router.post(
     "/register",
     status_code=status.HTTP_201_CREATED,
-    summary="Cria conta de turista e já entra",
+    summary="Cria conta (turista, ou carroceiro com `carrier`) e já entra",
     responses={status.HTTP_409_CONFLICT: {"description": "E-mail já cadastrado"}, **_429},
 )
 @limiter.limit(LIMITE_REGISTRO)
@@ -48,7 +48,13 @@ def registrar(
     request: Request, dados: RegistroIn, db: Annotated[Session, Depends(get_db)]
 ) -> RespostaLogin:
     try:
-        par = auth.registrar(db, nome=dados.name, email=dados.email, senha=dados.password)
+        par = auth.registrar(
+            db,
+            nome=dados.name,
+            email=dados.email,
+            senha=dados.password,
+            carroceiro=dados.carrier,
+        )
     except auth.EmailJaCadastrado as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Já existe uma conta com esse e-mail."
