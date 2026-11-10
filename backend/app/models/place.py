@@ -35,8 +35,9 @@ PLACE_KINDS = (
     "collection_point",
     "culture",
 )
-# 'ficticio' = dado de demonstração; 'campo' = levantado na validação em campo;
-# 'osm' = importado do OpenStreetMap.
+# 'campo' = dado real, mantido pela equipe (catálogo inicial do seed, painel admin ou
+# validação em campo); 'osm' = importado do OpenStreetMap; 'ficticio' = demonstração, sem uso
+# desde que o catálogo inicial passou a ser da equipe.
 SOURCES = ("ficticio", "campo", "osm")
 
 

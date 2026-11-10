@@ -1,13 +1,14 @@
-"""Popula o banco com dados FICTÍCIOS de demonstração.
+"""Popula o banco com o catálogo inicial e as contas de desenvolvimento.
 
     python -m scripts.seed            # insere o que faltar
-    python -m scripts.seed --reset    # apaga o que tem source='ficticio' e insere de novo
 
-É idempotente: cada registro é procurado pela sua chave natural (slug, e-mail, nome)
-antes de ser inserido, então rodar duas vezes não duplica nada.
+É idempotente: cada registro é procurado pela sua chave natural (slug, e-mail) antes de ser
+inserido, então rodar duas vezes não duplica nada.
 
-Nada aqui corresponde à realidade de Algodoal: nomes, telefones, e-mails e coordenadas
-são inventados. Os dados reais entram depois da validação em campo, com source='campo'.
+Os locais e estabelecimentos são o catálogo inicial, que a equipe corrige à mão pelo painel
+admin. Por isso só entram num banco sem nenhum local: depois disso o catálogo é da equipe, e
+rodar o seed de novo não recria, não renomeia e não move nada. Usuários e carroceiros daqui
+continuam inventados (e-mails @example.com), só para desenvolvimento.
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ import sys
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -25,9 +26,10 @@ from app.core.security import gerar_hash, verificar_senha
 from app.db.session import SessionLocal
 from app.models import Business, Carrier, Category, Place, PlacePhoto, User
 
-FICTICIO = "ficticio"
+# Catálogo inicial é dado real mantido pela equipe, como o que entra pelo painel admin.
+ORIGEM_DO_CATALOGO = "campo"
 
-# Hierarquia da seção 7 do PRD. Estrutura real do diretório, não é dado fictício.
+# Hierarquia da seção 7 do PRD. Estrutura do diretório.
 CATEGORIAS: list[dict[str, Any]] = [
     {
         "slug": "turismo",
@@ -97,8 +99,8 @@ CATEGORIAS: list[dict[str, Any]] = [
 # - as praias nas bordas da ilha (norte, sul, leste);
 # - trilhas e ponto de coleta entre a vila e as praias;
 # - o ponto de carroças no começo do trapiche, onde chega o barco de Marudá.
-# Abrindo o mapa (zoom 14, tela de 390x844), 12 dos 16 locais ficam visíveis. Os nomes
-# continuam inventados: são lugares fictícios postos sobre o mapa real.
+# Abrindo o mapa (zoom 14, tela de 390x844), 12 dos 16 locais ficam visíveis. Nomes,
+# descrições e posições são o ponto de partida: a equipe atualiza cada um pelo painel admin.
 PLACES: list[dict[str, Any]] = [
     {
         "name": "Praia do Cajueiro Torto",
@@ -106,7 +108,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "praias",
         "latitude": "-0.579500",
         "longitude": "-47.579600",
-        "description": "Faixa de areia larga, boa para banho na maré baixa. Local fictício.",
+        "description": "Faixa de areia larga, boa para banho na maré baixa.",
     },
     {
         "name": "Praia da Maré Virada",
@@ -114,7 +116,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "praias",
         "latitude": "-0.607600",
         "longitude": "-47.581950",
-        "description": "Mar aberto e vento constante à tarde. Local fictício.",
+        "description": "Mar aberto e vento constante à tarde.",
     },
     {
         "name": "Praia do Sol Deitado",
@@ -122,7 +124,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "praias",
         "latitude": "-0.625000",
         "longitude": "-47.540600",
-        "description": "Trecho tranquilo, sem estrutura. Local fictício.",
+        "description": "Trecho tranquilo, sem estrutura.",
     },
     {
         "name": "Trilha do Vento Sul",
@@ -130,7 +132,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "trilhas",
         "latitude": "-0.585500",
         "longitude": "-47.580500",
-        "description": "Cerca de 40 minutos entre o campo e o mangue. Local fictício.",
+        "description": "Cerca de 40 minutos entre o campo e o mangue.",
     },
     {
         "name": "Trilha das Dunas Claras",
@@ -138,7 +140,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "trilhas",
         "latitude": "-0.603800",
         "longitude": "-47.583000",
-        "description": "Percurso curto sobre dunas fixas. Local fictício.",
+        "description": "Percurso curto sobre dunas fixas.",
     },
     {
         "name": "Mirante da Pedra Lisa",
@@ -146,7 +148,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "pontos-turisticos",
         "latitude": "-0.587900",
         "longitude": "-47.586800",
-        "description": "Ponto alto com vista para a foz. Local fictício.",
+        "description": "Ponto alto com vista para a foz.",
     },
     {
         "name": "Passeio de Canoa ao Entardecer",
@@ -154,7 +156,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "experiencias",
         "latitude": "-0.596600",
         "longitude": "-47.584200",
-        "description": "Saída de canoa pelo furo, com guia local. Experiência fictícia.",
+        "description": "Saída de canoa pelo furo, com guia local.",
     },
     {
         "name": "Roda de Carimbó do Terreiro Velho",
@@ -162,7 +164,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "cultura-local",
         "latitude": "-0.591500",
         "longitude": "-47.585200",
-        "description": "Roda aberta aos sábados na praça. Evento fictício.",
+        "description": "Roda aberta aos sábados na praça.",
     },
     {
         "name": "Ponto de Coleta Boca da Mata",
@@ -170,7 +172,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "pontos-de-coleta",
         "latitude": "-0.595000",
         "longitude": "-47.581600",
-        "description": "Recebe vidro, plástico e alumínio. Ponto fictício.",
+        "description": "Recebe vidro, plástico e alumínio.",
     },
     {
         "name": "Ponto de Carroças",
@@ -178,7 +180,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "carroceiros",
         "latitude": "-0.599000",
         "longitude": "-47.586600",
-        "description": "Onde as carroças esperam quem chega pelo trapiche. Ponto fictício.",
+        "description": "Onde as carroças esperam quem chega pelo trapiche.",
     },
     {
         "name": "Pousada Maré Mansa",
@@ -186,7 +188,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "pousadas",
         "latitude": "-0.589400",
         "longitude": "-47.587800",
-        "description": "Dez quartos com rede na varanda. Estabelecimento fictício.",
+        "description": "Dez quartos com rede na varanda.",
     },
     {
         "name": "Pousada Rede de Areia",
@@ -194,7 +196,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "pousadas",
         "latitude": "-0.593400",
         "longitude": "-47.583800",
-        "description": "Hospedagem simples de frente para o campo. Estabelecimento fictício.",
+        "description": "Hospedagem simples de frente para o campo.",
     },
     {
         "name": "Restaurante Vento Sul",
@@ -202,7 +204,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "restaurantes",
         "latitude": "-0.590600",
         "longitude": "-47.587000",
-        "description": "Peixe frito e camarão no almoço. Estabelecimento fictício.",
+        "description": "Peixe frito e camarão no almoço.",
     },
     {
         "name": "Lanchonete Caju Verde",
@@ -210,7 +212,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "lanchonetes",
         "latitude": "-0.592600",
         "longitude": "-47.587600",
-        "description": "Açaí, tapioca e suco de cupuaçu. Estabelecimento fictício.",
+        "description": "Açaí, tapioca e suco de cupuaçu.",
     },
     {
         "name": "Barraca do Peixe Dourado",
@@ -218,7 +220,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "barracas",
         "latitude": "-0.594000",
         "longitude": "-47.588400",
-        "description": "Barraca de praia com cadeiras e petiscos. Estabelecimento fictício.",
+        "description": "Barraca de praia com cadeiras e petiscos.",
     },
     {
         "name": "Ateliê Linha da Maré",
@@ -226,7 +228,7 @@ PLACES: list[dict[str, Any]] = [
         "category": "artesanato",
         "latitude": "-0.589600",
         "longitude": "-47.584800",
-        "description": "Peças de palha e crochê feitas na hora. Estabelecimento fictício.",
+        "description": "Peças de palha e crochê feitas na hora.",
     },
 ]
 
@@ -338,7 +340,7 @@ USERS: list[dict[str, Any]] = [
 ]
 
 # Contas para entrar no app em desenvolvimento (README, "Contas de teste"). Todas com a mesma
-# senha. Os demais usuários fictícios seguem sem senha, portanto sem login.
+# senha. Os demais usuários do seed seguem sem senha, portanto sem login.
 SENHA_DE_TESTE = "algodoal-teste"
 CONTAS_DE_TESTE: list[dict[str, Any]] = [
     {"name": "Admin de Teste", "email": "admin@example.com", "role": "admin"},
@@ -348,13 +350,13 @@ CONTAS_DE_TESTE: list[dict[str, Any]] = [
 
 
 class SeedEmProducao(RuntimeError):
-    """O seed cria dados fictícios e contas com senha conhecida: nunca em produção."""
+    """O seed cria usuários inventados e contas com senha conhecida: nunca em produção."""
 
 
 def garantir_que_nao_e_producao() -> None:
     if get_settings().environment == "production":
         raise SeedEmProducao(
-            "O seed não roda com ENVIRONMENT=production: ele cria locais e usuários fictícios e "
+            "O seed não roda com ENVIRONMENT=production: ele cria usuários inventados e "
             f"contas de teste com a senha conhecida {SENHA_DE_TESTE!r} (inclusive um admin). "
             "Para dados reais, use a importação da planilha de campo."
         )
@@ -418,17 +420,6 @@ TABELAS_DO_RESUMO = (
     ("businesses", Business),
     ("carriers", Carrier),
 )
-
-
-def reset_ficticios(session: Session) -> None:
-    """Apaga só o que foi marcado como fictício. Dado de campo e categorias não são tocados."""
-    ids_ficticios = select(Place.id).where(Place.source == FICTICIO)
-    session.query(PlacePhoto).filter(PlacePhoto.place_id.in_(ids_ficticios)).delete(
-        synchronize_session=False
-    )
-    session.query(Business).filter(Business.source == FICTICIO).delete(synchronize_session=False)
-    session.query(Place).filter(Place.source == FICTICIO).delete(synchronize_session=False)
-    session.flush()
 
 
 def _seed_categories(session: Session) -> dict[str, Category]:
@@ -498,29 +489,27 @@ def _seed_contas_de_teste(session: Session) -> None:
     session.flush()
 
 
+def _ja_tem_catalogo(session: Session) -> bool:
+    """Qualquer local, inclusive removido: a partir daí o catálogo é mantido pelo painel."""
+    return session.scalar(select(exists().where(Place.id.is_not(None)))) or False
+
+
 def _seed_places(session: Session, categorias: dict[str, Category]) -> dict[str, Place]:
     por_nome: dict[str, Place] = {}
     for definicao in PLACES:
-        local = session.scalar(select(Place).where(Place.name == definicao["name"]))
-        if local is None:
-            local = Place(
-                name=definicao["name"],
-                kind=definicao["kind"],
-                category_id=categorias[definicao["category"]].id,
-                latitude=Decimal(definicao["latitude"]),
-                longitude=Decimal(definicao["longitude"]),
-                description=definicao["description"],
-                is_published=True,
-                source=FICTICIO,
-            )
-            session.add(local)
-            session.flush()
-        elif local.source == FICTICIO:
-            # Bancos semeados antes da correção têm as coordenadas antigas, espalhadas e com
-            # local no mar; rodar o seed de novo as acerta. Dado de campo não é tocado.
-            local.latitude = Decimal(definicao["latitude"])
-            local.longitude = Decimal(definicao["longitude"])
+        local = Place(
+            name=definicao["name"],
+            kind=definicao["kind"],
+            category_id=categorias[definicao["category"]].id,
+            latitude=Decimal(definicao["latitude"]),
+            longitude=Decimal(definicao["longitude"]),
+            description=definicao["description"],
+            is_published=True,
+            source=ORIGEM_DO_CATALOGO,
+        )
+        session.add(local)
         por_nome[local.name] = local
+    session.flush()
     return por_nome
 
 
@@ -531,28 +520,15 @@ def _seed_place_photos(session: Session, places: dict[str, Place]) -> None:
         local = places[definicao["place"]]
         posicao = proxima_posicao.get(local.name, 0)
         proxima_posicao[local.name] = posicao + 1
-        existente = session.scalar(
-            select(PlacePhoto).where(PlacePhoto.storage_key == definicao["storage_key"])
+        session.add(
+            PlacePhoto(place_id=local.id, storage_key=definicao["storage_key"], position=posicao)
         )
-        if existente is None:
-            session.add(
-                PlacePhoto(
-                    place_id=local.id, storage_key=definicao["storage_key"], position=posicao
-                )
-            )
-        elif existente.position != posicao:
-            # Bancos semeados antes da correção têm a numeração global antiga (0, 1, 2 entre
-            # locais diferentes); rodar o seed de novo acerta.
-            existente.position = posicao
     session.flush()
 
 
 def _seed_businesses(session: Session, places: dict[str, Place], users: dict[str, User]) -> None:
     for definicao in BUSINESSES:
         local = places[definicao["place"]]
-        existente = session.scalar(select(Business).where(Business.place_id == local.id))
-        if existente is not None:
-            continue
         dono = users.get(definicao["owner_email"]) if definicao["owner_email"] else None
         session.add(
             Business(
@@ -564,7 +540,7 @@ def _seed_businesses(session: Session, places: dict[str, Place], users: dict[str
                 price_range=definicao["price_range"],
                 services=definicao["services"],
                 is_partner=definicao["is_partner"],
-                source=FICTICIO,
+                source=ORIGEM_DO_CATALOGO,
             )
         )
     session.flush()
@@ -596,34 +572,33 @@ def contagens(session: Session) -> dict[str, int]:
     }
 
 
-def seed(session: Session, reset: bool = False) -> dict[str, int]:
+def seed(session: Session) -> dict[str, int]:
     """Insere o que faltar e devolve a contagem por tabela. Chamar duas vezes não duplica.
     Recusa rodar em produção (SeedEmProducao) antes de qualquer escrita."""
     garantir_que_nao_e_producao()
-    if reset:
-        reset_ficticios(session)
     categorias = _seed_categories(session)
     usuarios = _seed_users(session)
     _seed_contas_de_teste(session)
-    locais = _seed_places(session, categorias)
-    _seed_place_photos(session, locais)
-    _seed_businesses(session, locais, usuarios)
+    if not _ja_tem_catalogo(session):
+        locais = _seed_places(session, categorias)
+        _seed_place_photos(session, locais)
+        _seed_businesses(session, locais, usuarios)
     _seed_carriers(session, usuarios)
     session.commit()
     return contagens(session)
 
 
-def _imprime_resumo(resumo: dict[str, int], reset: bool) -> None:
+def _imprime_resumo(resumo: dict[str, int]) -> None:
     aviso = [
-        "ATENÇÃO: DADOS FICTÍCIOS DE DEMONSTRAÇÃO",
-        "Nomes, telefones, e-mails e coordenadas são",
-        "inventados. Nada aqui corresponde a pessoas",
-        "ou lugares reais de Algodoal.",
+        "ATENÇÃO: CONTAS DE DESENVOLVIMENTO",
+        "Usuários e carroceiros do seed são inventados",
+        "(@example.com), e as contas de teste têm",
+        "senha conhecida. O catálogo é da equipe.",
     ]
     largura = max(len(linha) for linha in aviso) + 8
 
     print()
-    print("Seed concluído" + (" (com --reset)" if reset else ""))
+    print("Seed concluído")
     print("-" * largura)
     for nome, total in resumo.items():
         print(f"{nome:<20} {total:>5}")
@@ -640,13 +615,7 @@ def _imprime_resumo(resumo: dict[str, int], reset: bool) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--reset",
-        action="store_true",
-        help="apaga as linhas com source='ficticio' antes de inserir",
-    )
-    args = parser.parse_args()
+    argparse.ArgumentParser(description=__doc__).parse_args()
 
     try:
         garantir_que_nao_e_producao()
@@ -655,8 +624,8 @@ def main() -> None:
         sys.exit(1)
 
     with SessionLocal() as session:
-        resumo = seed(session, reset=args.reset)
-    _imprime_resumo(resumo, args.reset)
+        resumo = seed(session)
+    _imprime_resumo(resumo)
 
 
 if __name__ == "__main__":

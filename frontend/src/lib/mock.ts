@@ -135,7 +135,7 @@ function montarCategorias(): Categoria[] {
 
 
 // ---------------------------------------------------------------------------
-// Locais e estabelecimentos (fictícios, iguais ao seed)
+// Locais e estabelecimentos (os mesmos do catálogo inicial do seed)
 // ---------------------------------------------------------------------------
 
 const SEMANA_POUSADA: Record<string, [string, string][]> = {
@@ -160,27 +160,27 @@ type DefinicaoLocal = [
 
 const DEFINICOES: DefinicaoLocal[] = [
   ['Praia do Cajueiro Torto', 'beach', 'praias', -0.5795, -47.5796,
-    'Faixa de areia larga, boa para banho na maré baixa. Local fictício.'],
+    'Faixa de areia larga, boa para banho na maré baixa.'],
   ['Praia da Maré Virada', 'beach', 'praias', -0.6076, -47.58195,
-    'Mar aberto e vento constante à tarde. Local fictício.'],
+    'Mar aberto e vento constante à tarde.'],
   ['Praia do Sol Deitado', 'beach', 'praias', -0.625, -47.5406,
-    'Trecho tranquilo, sem estrutura. Local fictício.'],
+    'Trecho tranquilo, sem estrutura.'],
   ['Trilha do Vento Sul', 'trail', 'trilhas', -0.5855, -47.5805,
-    'Cerca de 40 minutos entre o campo e o mangue. Local fictício.'],
+    'Cerca de 40 minutos entre o campo e o mangue.'],
   ['Trilha das Dunas Claras', 'trail', 'trilhas', -0.6038, -47.583,
-    'Percurso curto sobre dunas fixas. Local fictício.'],
+    'Percurso curto sobre dunas fixas.'],
   ['Mirante da Pedra Lisa', 'tourist_point', 'pontos-turisticos', -0.5879, -47.5868,
-    'Ponto alto com vista para a foz. Local fictício.'],
+    'Ponto alto com vista para a foz.'],
   ['Passeio de Canoa ao Entardecer', 'experience', 'experiencias', -0.5966, -47.5842,
-    'Saída de canoa pelo furo, com guia local. Experiência fictícia.'],
+    'Saída de canoa pelo furo, com guia local.'],
   ['Roda de Carimbó do Terreiro Velho', 'culture', 'cultura-local', -0.5915, -47.5852,
-    'Roda aberta aos sábados na praça. Evento fictício.'],
+    'Roda aberta aos sábados na praça.'],
   ['Ponto de Coleta Boca da Mata', 'collection_point', 'pontos-de-coleta', -0.595, -47.5816,
-    'Recebe vidro, plástico e alumínio. Ponto fictício.'],
+    'Recebe vidro, plástico e alumínio.'],
   ['Ponto de Carroças', 'tourist_point', 'carroceiros', -0.599, -47.5866,
-    'Onde as carroças esperam quem chega pelo trapiche. Ponto fictício.'],
+    'Onde as carroças esperam quem chega pelo trapiche.'],
   ['Pousada Maré Mansa', 'business', 'pousadas', -0.5894, -47.5878,
-    'Dez quartos com rede na varanda. Estabelecimento fictício.',
+    'Dez quartos com rede na varanda.',
     {
       whatsapp: '(91) 95555-0101',
       phone: '(91) 95555-0101',
@@ -190,7 +190,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       is_partner: true,
     }],
   ['Pousada Rede de Areia', 'business', 'pousadas', -0.5934, -47.5838,
-    'Hospedagem simples de frente para o campo. Estabelecimento fictício.',
+    'Hospedagem simples de frente para o campo.',
     {
       whatsapp: '(91) 95555-0102',
       phone: null,
@@ -200,7 +200,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       is_partner: false,
     }],
   ['Restaurante Vento Sul', 'business', 'restaurantes', -0.5906, -47.587,
-    'Peixe frito e camarão no almoço. Estabelecimento fictício.',
+    'Peixe frito e camarão no almoço.',
     {
       whatsapp: '(91) 95555-0103',
       phone: '(91) 95555-0103',
@@ -217,7 +217,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       is_partner: true,
     }],
   ['Lanchonete Caju Verde', 'business', 'lanchonetes', -0.5926, -47.5876,
-    'Açaí, tapioca e suco de cupuaçu. Estabelecimento fictício.',
+    'Açaí, tapioca e suco de cupuaçu.',
     {
       whatsapp: '(91) 95555-0104',
       phone: null,
@@ -227,7 +227,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       is_partner: false,
     }],
   ['Barraca do Peixe Dourado', 'business', 'barracas', -0.594, -47.5884,
-    'Barraca de praia com cadeiras e petiscos. Estabelecimento fictício.',
+    'Barraca de praia com cadeiras e petiscos.',
     {
       whatsapp: '(91) 95555-0105',
       phone: null,
@@ -237,7 +237,7 @@ const DEFINICOES: DefinicaoLocal[] = [
       is_partner: false,
     }],
   ['Ateliê Linha da Maré', 'business', 'artesanato', -0.5896, -47.5848,
-    'Peças de palha e crochê feitas na hora. Estabelecimento fictício.',
+    'Peças de palha e crochê feitas na hora.',
     {
       whatsapp: '(91) 95555-0106',
       phone: null,
@@ -280,7 +280,7 @@ function montarLocais(categorias: Categoria[]): LocalDoMock[] {
       business: business ?? null,
       photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
       deleted_at: null,
-      source: 'ficticio' as const,
+      source: 'campo' as const,
       created_at: ATUALIZADO_EM,
     }),
   )

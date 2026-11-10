@@ -36,14 +36,19 @@ curl localhost:8000/api/v1/health/db   # {"status":"ok","database":"up"}
 
 Atalhos no `Makefile`: `make up`, `make logs`, `make test`, `make lint`, `make revision m="mensagem"`.
 
-### Dados de demonstração e contas de teste
+### Catálogo inicial e contas de teste
 
 ```bash
 make seed        # ou: docker compose exec api python -m scripts.seed
 ```
 
-O seed cria categorias, locais, estabelecimentos e carroceiros **fictícios** e três contas para
-entrar no app, todas com a senha de desenvolvimento **`algodoal-teste`**:
+O seed cria as categorias, o **catálogo inicial** de locais e estabelecimentos, alguns
+carroceiros de exemplo e três contas para entrar no app, todas com a senha de desenvolvimento
+**`algodoal-teste`**.
+
+O catálogo inicial só entra num banco **sem nenhum local**. Depois disso ele é da equipe, que o
+atualiza pelo painel admin (`/admin`), e rodar o seed de novo não recria, não renomeia e não
+move nenhum local.
 
 | E-mail | Perfil | Para quê |
 |---|---|---|
@@ -51,8 +56,8 @@ entrar no app, todas com a senha de desenvolvimento **`algodoal-teste`**:
 | `turista@example.com` | tourist | passaporte e pedido de carroça |
 | `carroceiro@example.com` | carrier | área do carroceiro |
 
-Os demais usuários fictícios do seed não têm senha e não entram. O seed recusa rodar com
-`ENVIRONMENT=production`: ele cria dados inventados e contas com senha conhecida.
+Os demais usuários do seed (`@example.com`) são inventados, não têm senha e não entram. O seed
+recusa rodar com `ENVIRONMENT=production`: ele cria contas com senha conhecida.
 
 ## Testes e lint
 

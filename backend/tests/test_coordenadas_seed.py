@@ -1,16 +1,10 @@
-"""Geografia dos locais fictícios do seed: o mapa abre no zoom 14 sobre a vila, e a maior parte
+"""Geografia do catálogo inicial do seed: o mapa abre no zoom 14 sobre a vila, e a maior parte
 dos locais tem de estar ali. A conferência de "nada na água" é feita contra o arquivo de tiles
 (frontend/public/mapa/algodoal.pmtiles), que não está no container do backend."""
 
 import math
-from decimal import Decimal
 
-import pytest
-from sqlalchemy import select
-
-from app.models import Category, Place
-from scripts.seed import PLACES, seed
-from tests.conftest import precisa_de_banco
+from scripts.seed import PLACES
 
 # Mesmos valores do frontend (src/components/mapa/estilo.ts)
 VILA = (-0.59219, -47.58609)  # "Algodoal" (place/locality) no arquivo de tiles
@@ -69,33 +63,3 @@ def test_todos_dentro_do_recorte_do_mapa():
         lat, lng = coordenadas(p)
         assert RECORTE["sul"] < lat < RECORTE["norte"], p["name"]
         assert RECORTE["oeste"] < lng < RECORTE["leste"], p["name"]
-
-
-@pytest.mark.db
-@precisa_de_banco
-def test_seed_corrige_coordenadas_de_ficticio_antigo_sem_tocar_dado_de_campo(db):
-    seed(db)
-    ficticio = db.scalar(select(Place).where(Place.name == "Ateliê Linha da Maré"))
-    ficticio.latitude, ficticio.longitude = Decimal("-0.612200"), Decimal("-47.597400")  # no mar
-    categoria = db.scalar(select(Category).where(Category.slug == "praias"))
-    de_campo = Place(
-        name="Praia de verdade",
-        kind="beach",
-        category_id=categoria.id,
-        latitude=Decimal("-0.578260"),
-        longitude=Decimal("-47.580330"),
-        source="campo",
-    )
-    db.add(de_campo)
-    db.flush()
-
-    seed(db)
-    db.refresh(ficticio)
-    db.refresh(de_campo)
-
-    (definicao,) = [p for p in PLACES if p["name"] == "Ateliê Linha da Maré"]
-    assert (ficticio.latitude, ficticio.longitude) == (
-        Decimal(definicao["latitude"]),
-        Decimal(definicao["longitude"]),
-    )
-    assert (de_campo.latitude, de_campo.longitude) == (Decimal("-0.578260"), Decimal("-47.580330"))
