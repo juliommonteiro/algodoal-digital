@@ -100,11 +100,11 @@ def restaurar_local(place_id: uuid.UUID, db: Db) -> PlaceAdminRead:
     return _ler(admin_catalog.restaurar_local(db, place_id))
 
 
-@router.get("/indicators", summary="Indicadores do piloto (usuários, locais, carroça)")
-def obter_indicadores(db: Db) -> Indicadores:
-    return indicadores.calcular(db)
-
-
 @router.get("/categories", summary="Categorias, para os seletores do painel")
 def listar_categorias(db: Db) -> list[CategoryRead]:
     return [CategoryRead.model_validate(c) for c in catalog.listar_categorias(db)]
+
+
+@router.get("/indicators", summary="Indicadores do piloto (usuários, locais, carroça)")
+def obter_indicadores(db: Db) -> Indicadores:
+    return indicadores.calcular(db)
