@@ -1,11 +1,10 @@
-import re
 import uuid
 from typing import Annotated, Literal, get_args
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
-from pydantic_core import PydanticCustomError
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
 from app.models.user import USER_ROLES
+from app.schemas.contato import WhatsApp
 
 SENHA_MINIMA = 8
 # Argon2 aceita qualquer tamanho, mas senha de megabytes vira ataque de CPU.
@@ -23,19 +22,8 @@ class CarroceiroIn(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    whatsapp: Annotated[str, StringConstraints(strip_whitespace=True, max_length=30)]
+    whatsapp: WhatsApp
     capacity: Annotated[int, Field(ge=1, le=CAPACIDADE_MAXIMA)] = 2
-
-    @field_validator("whatsapp")
-    @classmethod
-    def _whatsapp(cls, valor: str) -> str:
-        # Com DDD (10 ou 11 dígitos) ou já com o 55 do Brasil: é o que o link wa.me aceita.
-        digitos = re.sub(r"\D", "", valor)
-        if not (len(digitos) in (10, 11) or (len(digitos) in (12, 13) and digitos[:2] == "55")):
-            raise PydanticCustomError(
-                "whatsapp_invalido", "Informe o WhatsApp com DDD, por exemplo (91) 98888-7777."
-            )
-        return valor
 
 
 class RegistroIn(BaseModel):

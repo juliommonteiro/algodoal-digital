@@ -49,7 +49,10 @@ function soDigitos(telefone: string): string {
 }
 
 export function linkWhatsApp(telefone: string, nomeDoLocal: string): string {
-  const texto = `Olá! Encontrei ${nomeDoLocal} no Algodoal Digital.`
+  return linkWhatsAppComTexto(telefone, `Olá! Encontrei ${nomeDoLocal} no Algodoal Digital.`)
+}
+
+export function linkWhatsAppComTexto(telefone: string, texto: string): string {
   return `https://wa.me/${soDigitos(telefone)}?text=${encodeURIComponent(texto)}`
 }
 

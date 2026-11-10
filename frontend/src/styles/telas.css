@@ -531,3 +531,259 @@
     border-right: 1px solid var(--borda);
   }
 }
+
+/* ------------------------------------------------------------------------------------------
+   Carroça (#32): pedido do turista. Protótipos 05 e 06.
+   ------------------------------------------------------------------------------------------ */
+.carroca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-4);
+  max-width: 560px;
+}
+.carroca__cabecalho h1 {
+  font-size: 28px;
+}
+.carroca__formulario {
+  gap: var(--e-3);
+}
+.carroca__cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-4);
+  padding: var(--e-4);
+}
+.carroca__passageiros {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.carroca__contagem {
+  margin: var(--e-1) 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.carroca__stepper {
+  display: flex;
+  gap: var(--e-3);
+}
+.carroca__passo {
+  width: var(--toque);
+  height: var(--toque);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--tinta);
+  font-size: 22px;
+  line-height: 1;
+}
+.carroca__passo:disabled {
+  opacity: 0.4;
+}
+.carroca__dica {
+  margin: 0;
+  font-size: 14px;
+  color: var(--suave);
+}
+.carroca__situacao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e-3);
+  padding: var(--e-6) var(--e-2);
+  text-align: center;
+}
+.carroca__situacao h2 {
+  font-size: 22px;
+}
+.carroca__situacao p {
+  margin: 0;
+  color: var(--tinta-2);
+}
+.carroca__situacao .botao--largo {
+  width: 100%;
+}
+.carroca__pulso {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--terracota);
+  box-shadow: 0 0 0 16px color-mix(in srgb, var(--terracota) 12%, transparent);
+  animation: carroca-pulso 1.6s ease-in-out infinite;
+}
+@keyframes carroca-pulso {
+  50% {
+    transform: scale(0.88);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carroca__pulso {
+    animation: none;
+  }
+}
+.carroca__selo {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--verde);
+  color: #fff;
+}
+.carroca__resumo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-1);
+  font-weight: 600;
+}
+.carroca__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-3);
+}
+.carroca__link {
+  min-height: var(--toque);
+  padding: 0 var(--e-2);
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.carroca__subtitulo {
+  font-size: 18px;
+}
+.carroca__contatos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  width: 100%;
+  text-align: left;
+}
+.carroca__contatos ul,
+.carroceiro__viagens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+.carroca__contatos li,
+.carroceiro__viagens li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-2) var(--e-3);
+  padding: var(--e-3) var(--e-4);
+}
+.carroca__contatos li + li,
+.carroceiro__viagens li + li {
+  border-top: 1px solid var(--borda);
+}
+.carroca__contatos li > div,
+.carroceiro__viagens li > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.carroca__contatos li span,
+.carroceiro__viagens li span,
+.carroceiro__viagens time {
+  font-size: 14px;
+  color: var(--suave);
+}
+
+/* ------------------------------------------------------------------------------------------
+   Painel do carroceiro (#33). Protótipo 07.
+   ------------------------------------------------------------------------------------------ */
+.carroceiro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-5);
+  max-width: 560px;
+}
+.carroceiro__perfil {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  padding: var(--e-4);
+}
+.carroceiro__nome {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.carroceiro__estado {
+  margin: var(--e-1) 0 0;
+  color: var(--tinta-2);
+}
+.carroceiro__chave {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--borda);
+  transition: background 0.15s;
+}
+.carroceiro__chave span {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s;
+}
+.carroceiro__chave[aria-checked='true'] {
+  background: var(--verde);
+}
+.carroceiro__chave[aria-checked='true'] span {
+  transform: translateX(28px);
+}
+.carroceiro__bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+}
+.carroceiro__bloco-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.carroceiro__pedido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  padding: var(--e-5);
+  border: 2px solid var(--terracota);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--terracota) 5%, var(--superficie));
+}
+.carroceiro__dados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  margin: 0;
+}
+.carroceiro__dados dt {
+  font-size: 14px;
+  color: var(--suave);
+}
+.carroceiro__dados dd {
+  margin: 0;
+}
+.carroceiro__lugar {
+  font-size: 24px;
+  font-weight: 700;
+}

@@ -85,6 +85,78 @@ export interface FiltrosLocais {
   kind?: TipoLocal
 }
 
+// ---------------------------------------------------------------------------
+// Carroça (/api/v1/ride-requests, /carriers, /carrier; S10, #32 e #33)
+// ---------------------------------------------------------------------------
+
+export type StatusPedido = 'pending' | 'accepted' | 'declined' | 'cancelled' | 'expired'
+
+/** Corpo de POST /ride-requests. Backend: PedidoIn. */
+export interface PedidoEntrada {
+  origin: string
+  destination: string
+  passengers: number
+  /** Horário e observações num texto só ("Agora · duas malas grandes"). */
+  notes: string | null
+  /** Do turista: só o carroceiro que aceitar vê. */
+  whatsapp: string
+}
+
+/** O pedido como o turista vê: o carroceiro aparece depois do aceite. */
+export interface PedidoDoTurista {
+  id: string
+  origin: string
+  destination: string
+  passengers: number
+  notes: string | null
+  status: StatusPedido
+  created_at: string
+  expires_at: string
+  responded_at: string | null
+  carrier: { display_name: string; whatsapp: string | null } | null
+}
+
+/** O pedido como o carroceiro vê: o WhatsApp do turista só para quem aceitou. */
+export interface PedidoParaCarroceiro {
+  id: string
+  origin: string
+  destination: string
+  passengers: number
+  notes: string | null
+  status: StatusPedido
+  created_at: string
+  expires_at: string
+  responded_at: string | null
+  tourist_name: string
+  tourist_whatsapp: string | null
+}
+
+export interface PerfilCarroceiro {
+  display_name: string
+  whatsapp: string | null
+  capacity: number
+  is_available: boolean
+}
+
+/** GET /carriers: para chamar direto pelo WhatsApp, inclusive sem internet. */
+export type ContatoCarroceiro = PerfilCarroceiro
+
+export interface ClienteCarroca {
+  pedir(pedido: PedidoEntrada): Promise<PedidoDoTurista>
+  /** null quando não há pedido recente (a API responde 204). */
+  pedidoAtual(): Promise<PedidoDoTurista | null>
+  cancelar(id: string): Promise<PedidoDoTurista>
+  contatos(): Promise<ContatoCarroceiro[]>
+  meuPerfil(): Promise<PerfilCarroceiro>
+  atualizarPerfil(
+    mudancas: Partial<Pick<PerfilCarroceiro, 'is_available' | 'capacity' | 'whatsapp'>>,
+  ): Promise<PerfilCarroceiro>
+  pedidosAbertos(): Promise<PedidoParaCarroceiro[]>
+  aceitar(id: string): Promise<PedidoParaCarroceiro>
+  recusar(id: string): Promise<void>
+  viagens(): Promise<PedidoParaCarroceiro[]>
+}
+
 /** O que o cliente real (api.ts) e o mock (mock.ts) implementam. */
 export interface ClienteApi {
   registrar(

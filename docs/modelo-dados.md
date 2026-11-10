@@ -16,6 +16,8 @@ erDiagram
 
     users ||--o{ ride_requests : solicita
     carriers ||--o{ ride_requests : atende
+    ride_requests ||--o{ ride_request_declines : "recusado por"
+    carriers ||--o{ ride_request_declines : recusa
 
     missions ||--o{ qr_codes : "validada por"
     users ||--o{ environmental_actions : registra
@@ -98,10 +100,15 @@ erDiagram
         text origin
         text destination
         int passengers
-        timestamptz pickup_at
         text notes
+        text tourist_whatsapp
         ride_status status
         timestamptz responded_at
+        timestamptz created_at
+    }
+    ride_request_declines {
+        uuid ride_request_id PK
+        uuid carrier_id PK
         timestamptz created_at
     }
     missions {
@@ -214,6 +221,7 @@ erDiagram
 - **`points_transactions` é a fonte da verdade.** Saldo = `SUM(amount)`. Resgatar recompensa grava uma linha negativa. `source_type` + `source_id` apontam para o check-in, ação ou resgate que originou a linha.
 - **`sync_events`** guarda o bruto de tudo que chegou pela Outbox, com o motivo de rejeição. É o log para depurar "meus pontos sumiram" durante o piloto.
 - **Ranking** (épico 6 do PRD) não tem tabela: é uma consulta sobre `points_transactions`.
+- **Pedido de carroça vai para todos** (S10): `carrier_id` fica nulo até alguém aceitar, e o primeiro que aceitar leva. "Recusar" não muda o pedido, só grava em `ride_request_declines` que aquele carroceiro não quer, e o pedido some só da lista dele. Pendente vence em 10 minutos (`expired`). `pickup_at` virou texto livre em `notes` ("Agora · duas malas"), como no protótipo, e `tourist_whatsapp` guarda o contato do turista, que só o carroceiro que aceitou vê. O cadastro de turista não pede telefone.
 - **Horários** em `jsonb` (`{"seg": [["09:00","22:00"]], ...}`) evitam uma tabela extra que o MVP não precisa.
 
 ## Índices a criar desde o início

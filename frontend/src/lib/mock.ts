@@ -16,7 +16,9 @@ import type {
   ClienteApi,
   Local,
   Negocio,
+  PerfilCarroceiro,
   RespostaLogin,
+  StatusPedido,
   TipoLocal,
   Usuario,
 } from './tipos'
@@ -288,12 +290,51 @@ function montarLocais(categorias: Categoria[]): LocalDoMock[] {
 
 // Montados na primeira chamada, não no import: o topo do módulo fica sem efeito colateral e
 // o bundler consegue tirar o mock inteiro do build quando VITE_USAR_MOCK=false.
-let dados: { categorias: Categoria[]; locais: LocalDoMock[]; usuarios: Usuario[] } | null = null
+/** Perfil de carroceiro do mock, ligado ao usuário (como carriers.user_id). */
+export interface CarroceiroDoMock extends PerfilCarroceiro {
+  user_id: string
+  is_approved: boolean
+}
 
-function banco() {
+/** Pedido de carroça do mock, com o que o servidor guarda (ride_requests). */
+export interface PedidoDoMock {
+  id: string
+  tourist_id: string
+  tourist_name: string
+  tourist_whatsapp: string
+  carrier_user_id: string | null
+  origin: string
+  destination: string
+  passengers: number
+  notes: string | null
+  status: StatusPedido
+  created_at: string
+  responded_at: string | null
+}
+
+interface BancoDoMock {
+  categorias: Categoria[]
+  locais: LocalDoMock[]
+  usuarios: Usuario[]
+  carroceiros: CarroceiroDoMock[]
+  pedidos: PedidoDoMock[]
+  /** `${pedido}:${usuario}` de quem recusou. */
+  recusas: Set<string>
+}
+
+let dados: BancoDoMock | null = null
+
+function banco(): BancoDoMock {
   if (!dados) {
     const categorias = montarCategorias()
-    dados = { categorias, locais: montarLocais(categorias), usuarios: montarUsuarios() }
+    dados = {
+      categorias,
+      locais: montarLocais(categorias),
+      usuarios: montarUsuarios(),
+      carroceiros: montarCarroceiros(),
+      pedidos: [],
+      recusas: new Set(),
+    }
   }
   return dados
 }
@@ -339,6 +380,31 @@ function montarUsuarios(): Usuario[] {
   ]
 }
 
+// Mesmos perfis do seed (CARRIERS e a conta de teste). Tião não está aprovado.
+function montarCarroceiros(): CarroceiroDoMock[] {
+  const perfil = (
+    n: number,
+    display_name: string,
+    whatsapp: string,
+    capacity: number,
+    is_available: boolean,
+    is_approved = true,
+  ): CarroceiroDoMock => ({
+    user_id: uuid('c', n),
+    display_name,
+    whatsapp,
+    capacity,
+    is_available,
+    is_approved,
+  })
+  return [
+    perfil(9, 'Carroça de Teste', '(91) 95555-0209', 4, true),
+    perfil(2, 'Carroça do Bento', '(91) 95555-0202', 4, true),
+    perfil(5, 'Carroça da Rosa', '(91) 95555-0205', 2, false),
+    perfil(6, 'Carroça do Tião', '(91) 95555-0206', 6, true, false),
+  ]
+}
+
 // Quem se cadastra no mock fica só em memória; o refresh token carrega o próprio usuário,
 // então a sessão continua válida depois de recarregar a página.
 const cadastrados: Usuario[] = []
@@ -360,6 +426,13 @@ function decodificar(token: string, prefixo: string): Usuario | null {
 }
 
 let serie = 0
+
+/** Dono do token de acesso do mock, como o `usuario_atual` da API. Usado também pela carroça. */
+export function usuarioDaSessaoMock(): Usuario | null {
+  const token = obterTokenAcesso() ?? ''
+  const [, , carga] = token.split('.')
+  return token.startsWith('mock-acesso.') && carga ? decodificar(carga, '') : null
+}
 
 function sessao(usuario: Usuario): RespostaLogin {
   serie += 1
@@ -391,6 +464,16 @@ export const clienteMock: ClienteApi = {
       role: carroceiro ? 'carrier' : 'tourist',
     }
     cadastrados.push(usuario)
+    if (carroceiro) {
+      banco().carroceiros.push({
+        user_id: usuario.id,
+        display_name: usuario.name,
+        whatsapp: carroceiro.whatsapp,
+        capacity: carroceiro.capacity,
+        is_available: true,
+        is_approved: true,
+      })
+    }
     return responder(sessao(usuario))
   },
 
@@ -409,9 +492,7 @@ export const clienteMock: ClienteApi = {
   },
 
   eu() {
-    const token = obterTokenAcesso() ?? ''
-    const [, , carga] = token.split('.')
-    const usuario = token.startsWith('mock-acesso.') && carga ? decodificar(carga, '') : null
+    const usuario = usuarioDaSessaoMock()
     if (!usuario) return falhar(401, 'Não autenticado.')
     return responder(usuario)
   },
