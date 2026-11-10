@@ -158,7 +158,9 @@ async function enviar<T>(
     Accept: 'application/json',
     'X-Request-ID': requestId,
   }
-  if (corpo !== undefined) headers['Content-Type'] = 'application/json'
+  // Blob (foto, #29) vai como corpo bruto, com o tipo dele; o resto vai em JSON.
+  const arquivo = corpo instanceof Blob
+  if (corpo !== undefined) headers['Content-Type'] = arquivo ? corpo.type : 'application/json'
   if (tokenAcesso) headers.Authorization = `Bearer ${tokenAcesso}`
 
   const controlador = new AbortController()
@@ -170,7 +172,7 @@ async function enviar<T>(
     resposta = await fetch(`${BASE_URL}${PREFIXO}${caminho}`, {
       method: metodo,
       headers,
-      body: corpo === undefined ? undefined : JSON.stringify(corpo),
+      body: corpo === undefined ? undefined : arquivo ? corpo : JSON.stringify(corpo),
       signal: controlador.signal,
       cache: metodo === 'GET' ? 'no-store' : 'default',
     })

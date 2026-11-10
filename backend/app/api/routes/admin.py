@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import requer_perfil
+from app.api.fotos import registrar_rotas_de_fotos
 from app.db.session import get_db
 from app.models import Place
 from app.schemas.admin import PlaceAdminRead, PlaceCreate, PlaceUpdate, StatusAdmin
@@ -124,6 +125,14 @@ def remover_local(place_id: uuid.UUID, db: Db) -> PlaceAdminRead:
 def restaurar_local(place_id: uuid.UUID, db: Db) -> PlaceAdminRead:
     _local(db, place_id)
     return _ler(admin_catalog.restaurar_local(db, place_id))
+
+
+def _local_do_admin(place_id: uuid.UUID, db: Db) -> Place:
+    """O admin mexe nas fotos de qualquer local, inclusive rascunho ou removido."""
+    return _local(db, place_id)
+
+
+registrar_rotas_de_fotos(router, _local_do_admin)
 
 
 @router.get("/categories", summary="Categorias, para os seletores do painel")

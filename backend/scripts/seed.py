@@ -414,12 +414,7 @@ CARRIERS: list[dict[str, Any]] = [
     },
 ]
 
-# Sem foto real: as chaves apontam para arquivos que não existem, só para exercitar a tabela.
-PLACE_PHOTOS: list[dict[str, Any]] = [
-    {"place": "Praia do Cajueiro Torto", "storage_key": "ficticio/cajueiro-torto-01.webp"},
-    {"place": "Pousada Maré Mansa", "storage_key": "ficticio/mare-mansa-01.webp"},
-    {"place": "Restaurante Vento Sul", "storage_key": "ficticio/vento-sul-01.webp"},
-]
+# Sem fotos: a equipe e os parceiros enviam as de verdade pelos painéis (#29).
 
 TABELAS_DO_RESUMO = (
     ("categories", Category),
@@ -525,19 +520,6 @@ def _seed_places(session: Session, categorias: dict[str, Category]) -> dict[str,
     return por_nome
 
 
-def _seed_place_photos(session: Session, places: dict[str, Place]) -> None:
-    # position conta a partir de 0 dentro de cada local, na ordem de PLACE_PHOTOS.
-    proxima_posicao: dict[str, int] = {}
-    for definicao in PLACE_PHOTOS:
-        local = places[definicao["place"]]
-        posicao = proxima_posicao.get(local.name, 0)
-        proxima_posicao[local.name] = posicao + 1
-        session.add(
-            PlacePhoto(place_id=local.id, storage_key=definicao["storage_key"], position=posicao)
-        )
-    session.flush()
-
-
 def _seed_businesses(session: Session, places: dict[str, Place], users: dict[str, User]) -> None:
     for definicao in BUSINESSES:
         local = places[definicao["place"]]
@@ -593,7 +575,6 @@ def seed(session: Session) -> dict[str, int]:
     _seed_contas_de_teste(session)
     if not _ja_tem_catalogo(session):
         locais = _seed_places(session, categorias)
-        _seed_place_photos(session, locais)
         _seed_businesses(session, locais, usuarios)
     _seed_carriers(session, usuarios)
     session.commit()

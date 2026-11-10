@@ -21,3 +21,5 @@ dev-dist/
 .DS_Store
 # Ferramentas baixadas por scripts (ex.: CLI pmtiles)
 .ferramentas/
+# Fotos enviadas pelos painéis (#29): ficam só neste computador
+backend/media/

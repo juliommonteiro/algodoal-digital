@@ -65,12 +65,12 @@ export function coordenadas(latitude: number, longitude: number): string {
 }
 
 /**
- * URL da foto. O storage ainda não existe (decisão 7 da arquitetura: local em dev, S3 em
- * produção), e as chaves do seed são fictícias; nesses casos a tela mostra o substituto.
+ * URL da foto: a API serve a pasta de fotos em /api/v1/media (#29), que o proxy do Vite também
+ * cobre. As do mock não têm arquivo; nesse caso a tela mostra o substituto.
  */
 export function urlDaFoto(foto: Foto): string | null {
-  if (foto.storage_key.startsWith('ficticio/')) return null
-  return `${import.meta.env.VITE_API_URL ?? ''}/media/${foto.storage_key}`
+  if (foto.storage_key.startsWith('mock/')) return null
+  return `${import.meta.env.VITE_API_URL ?? ''}/api/v1/media/${foto.storage_key}`
 }
 
 /** Minúsculas e sem acento: "maré" encontra "Mare", "pousada" encontra "Pousada". */

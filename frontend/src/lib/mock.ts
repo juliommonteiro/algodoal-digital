@@ -250,13 +250,6 @@ const DEFINICOES: DefinicaoLocal[] = [
     }],
 ]
 
-// Sem foto real: as chaves apontam para arquivos que não existem (o front mostra o substituto).
-const FOTOS: Record<string, string> = {
-  'Praia do Cajueiro Torto': 'ficticio/cajueiro-torto-01.webp',
-  'Pousada Maré Mansa': 'ficticio/mare-mansa-01.webp',
-  'Restaurante Vento Sul': 'ficticio/vento-sul-01.webp',
-}
-
 const ATUALIZADO_EM = '2026-09-22T18:30:00Z'
 
 /** Como o banco guarda: com o que o público não vê (remoção, origem, dono). */
@@ -283,7 +276,7 @@ function montarLocais(categorias: Categoria[]): LocalDoMock[] {
       is_published: true,
       updated_at: ATUALIZADO_EM,
       business: business ? { ...business, owner_email: DONOS[name] ?? null } : null,
-      photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
+      photos: [],
       deleted_at: null,
       source: 'campo' as const,
       created_at: ATUALIZADO_EM,

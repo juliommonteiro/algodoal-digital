@@ -69,6 +69,15 @@ export function LocalPage() {
         <article className="detalhe__conteudo" aria-labelledby="titulo-local">
           <title>{`${carga.dados.local.name} · Algodoal Digital`}</title>
           <FotoLocal foto={carga.dados.local.photos[0]} nome={carga.dados.local.name} />
+          {carga.dados.local.photos.length > 1 && (
+            <ul className="detalhe__fotos" aria-label="Mais fotos">
+              {carga.dados.local.photos.slice(1).map((foto, indice) => (
+                <li key={foto.id}>
+                  <FotoLocal foto={foto} nome={`${carga.dados.local.name} (${indice + 2})`} />
+                </li>
+              ))}
+            </ul>
+          )}
 
           <header className="detalhe__cabecalho">
             <Rotulo>

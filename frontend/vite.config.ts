@@ -83,6 +83,20 @@ export default defineConfig({
         // App shell: todas as rotas caem no index.html quando offline.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            // Fotos dos locais (#29): a chave muda a cada envio (uuid), então o arquivo de uma
+            // chave nunca muda e pode sair do cache sem perguntar à rede. Quem abriu um local
+            // com rede vê a foto depois sem rede. Só 200 entra, para um erro não virar foto.
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/v1/media/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'algodoal-fotos-v1',
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
       devOptions: { enabled: false },
     }),

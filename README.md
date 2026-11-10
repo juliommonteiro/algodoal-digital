@@ -59,6 +59,13 @@ move nenhum local.
 Os demais usuários do seed (`@example.com`) são inventados, não têm senha e não entram. O seed
 recusa rodar com `ENVIRONMENT=production`: ele cria contas com senha conhecida.
 
+### Fotos dos locais
+
+As fotos enviadas pelo painel admin ou pelo do parceiro ficam em `backend/media/` (fora do git) e
+são servidas pela API em `/api/v1/media/...`. Como o banco, a pasta é de cada computador: envie
+as fotos na máquina que vai ser usada na apresentação. O app reduz cada foto para 1600 px antes
+de enviar e tira os metadados (inclusive a localização GPS da câmera).
+
 ## Testes e lint
 
 ```bash

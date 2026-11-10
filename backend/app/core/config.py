@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     database_url: str = Field(min_length=1)
     secret_key: str = CHAVE_DE_DESENVOLVIMENTO
     cors_origins: str = "http://localhost:5173"
+    # Fotos dos locais (#29): pasta local, servida em {api_prefix}/media. Relativa ao diretório
+    # de onde a API roda (no Docker, /app/media = backend/media no seu computador). Decisão 7
+    # da arquitetura: local em dev, atrás de app/core/storage.py.
+    media_dir: str = "media"
 
     # Tokens (S5). Acesso curto; renovação longa para o turista não precisar entrar de novo
     # depois de um dia offline (docs/arquitetura.md, "Autenticação e perfis").
