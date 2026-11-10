@@ -1014,8 +1014,9 @@ textarea:focus {
     display: none;
   }
 
-  .topo__nome,
-  .topo__link--painel {
+  /* O link do painel continua no celular: é por ele que carroceiro e parceiro chegam à área
+     deles (a barra de abas só tem as telas do turista). */
+  .topo__nome {
     display: none;
   }
 

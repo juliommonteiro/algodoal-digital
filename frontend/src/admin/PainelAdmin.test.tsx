@@ -314,6 +314,46 @@ describe('formulário do local', () => {
     expect(atualizar).toHaveBeenCalledWith(alvo.id, { name: 'Pousada Maré Mansa II' })
   })
 
+  it('mostra o dono e liga um turista como dono (ele vira parceiro)', async () => {
+    const alvo = localPorNome('Restaurante Vento Sul')
+    const atualizar = vi.spyOn(clienteAdminMock, 'atualizar')
+    simularSessao(ADMIN)
+    renderizarEm(`/admin/locais/${alvo.id}`)
+    const dono = await screen.findByLabelText('E-mail do dono (opcional)')
+    expect(dono).toHaveValue('')
+
+    fireEvent.change(dono, { target: { value: 'Turista@Example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }))
+
+    expect(await screen.findByText('"Restaurante Vento Sul" foi salvo.')).toBeInTheDocument()
+    expect(atualizar.mock.calls[0][1].business?.owner_email).toBe('Turista@Example.com')
+    expect(alvo.business?.owner_email).toBe('turista@example.com')
+    expect(bancoDoMock().usuarios.find((u) => u.email === 'turista@example.com')?.role).toBe('partner')
+  })
+
+  it('e-mail de dono sem conta aparece como erro no campo', async () => {
+    const alvo = localPorNome('Restaurante Vento Sul')
+    simularSessao(ADMIN)
+    renderizarEm(`/admin/locais/${alvo.id}`)
+    const dono = await screen.findByLabelText('E-mail do dono (opcional)')
+
+    fireEvent.change(dono, { target: { value: 'ninguem@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }))
+
+    expect(await screen.findByText(/Peça para a pessoa criar a conta/)).toBeInTheDocument()
+    expect(dono).toHaveAttribute('aria-invalid', 'true')
+    expect(alvo.business?.owner_email).toBeNull()
+  })
+
+  it('o dono da pousada do seed aparece no formulário', async () => {
+    simularSessao(ADMIN)
+    renderizarEm(`/admin/locais/${localPorNome('Pousada Maré Mansa').id}`)
+
+    expect(await screen.findByLabelText('E-mail do dono (opcional)')).toHaveValue(
+      'celia.parceira@example.com',
+    )
+  })
+
   it('local inexistente mostra "Local não encontrado"', async () => {
     simularSessao(ADMIN)
     renderizarEm('/admin/locais/00000000-0000-4000-b000-999999999999')

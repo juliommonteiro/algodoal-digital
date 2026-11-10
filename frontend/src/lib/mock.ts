@@ -259,8 +259,11 @@ const FOTOS: Record<string, string> = {
 
 const ATUALIZADO_EM = '2026-09-22T18:30:00Z'
 
-/** Como o banco guarda: com o que o público não vê (remoção, origem). */
+/** Como o banco guarda: com o que o público não vê (remoção, origem, dono). */
 export type LocalDoMock = LocalAdmin
+
+// Mesmo dono do seed (BUSINESSES, owner_email).
+const DONOS: Record<string, string> = { 'Pousada Maré Mansa': 'celia.parceira@example.com' }
 
 function montarLocais(categorias: Categoria[]): LocalDoMock[] {
   const idCategoria = (slug: string): string => {
@@ -279,7 +282,7 @@ function montarLocais(categorias: Categoria[]): LocalDoMock[] {
       longitude,
       is_published: true,
       updated_at: ATUALIZADO_EM,
-      business: business ?? null,
+      business: business ? { ...business, owner_email: DONOS[name] ?? null } : null,
       photos: FOTOS[name] ? [{ id: uuid('d', i + 1), storage_key: FOTOS[name], position: 0 }] : [],
       deleted_at: null,
       source: 'campo' as const,
@@ -351,9 +354,11 @@ export function bancoDoMock() {
 }
 
 /** O público não vê o que só o painel vê. */
-function publico(local: LocalDoMock): Local {
-  const { deleted_at: _d, source: _s, created_at: _c, ...visivel } = local
-  return visivel
+export function publico(local: LocalDoMock): Local {
+  const { deleted_at: _d, source: _s, created_at: _c, business, ...visivel } = local
+  if (!business) return { ...visivel, business: null }
+  const { owner_email: _o, ...negocio } = business
+  return { ...visivel, business: negocio }
 }
 
 const visivelAoPublico = (l: LocalDoMock) => l.is_published && l.deleted_at === null
@@ -371,6 +376,7 @@ function montarUsuarios(): Usuario[] {
   { id: uuid('c', 7), name: 'Admin de Teste', email: 'admin@example.com', role: 'admin' },
   { id: uuid('c', 8), name: 'Turista de Teste', email: 'turista@example.com', role: 'tourist' },
   { id: uuid('c', 9), name: 'Carroceiro de Teste', email: 'carroceiro@example.com', role: 'carrier' },
+  { id: uuid('c', 10), name: 'Parceiro de Teste', email: 'parceiro@example.com', role: 'partner' },
   { id: uuid('c', 1), name: 'Ana Viajante', email: 'ana.turista@example.com', role: 'tourist' },
   { id: uuid('c', 2), name: 'Bento Carroça', email: 'bento.carroceiro@example.com', role: 'carrier' },
   { id: uuid('c', 3), name: 'Célia Parceira', email: 'celia.parceira@example.com', role: 'partner' },
@@ -442,6 +448,11 @@ function sessao(usuario: Usuario): RespostaLogin {
     token_type: 'bearer',
     user: usuario,
   }
+}
+
+/** A conta (mutável) do mock com esse e-mail, inclusive as cadastradas na sessão. */
+export function contaDoMock(email: string): Usuario | undefined {
+  return buscarPorEmail(email)
 }
 
 function buscarPorEmail(email: string): Usuario | undefined {

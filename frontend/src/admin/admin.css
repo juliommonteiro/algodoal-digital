@@ -265,17 +265,6 @@
   gap: var(--e-3);
 }
 
-.campo__input--area {
-  min-height: 6rem;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.5;
-}
-.campo__dica {
-  color: var(--suave);
-  font-size: 14px;
-}
-
 .caixa {
   display: grid;
   grid-template-columns: auto 1fr;

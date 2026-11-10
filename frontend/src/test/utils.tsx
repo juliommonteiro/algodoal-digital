@@ -27,6 +27,14 @@ export const CARROCEIRO: Usuario = {
   role: 'carrier',
 }
 
+/** Dona da Pousada Maré Mansa no seed. */
+export const PARCEIRA: Usuario = {
+  id: '00000000-0000-4000-c000-000000000003',
+  name: 'Célia Parceira',
+  email: 'celia.parceira@example.com',
+  role: 'partner',
+}
+
 /** Simula uma sessão salva por um login anterior (o que o app acha no localStorage ao abrir). */
 export function simularSessao(usuario: Usuario = TURISTA): SessaoSalva {
   const sessao: SessaoSalva = {

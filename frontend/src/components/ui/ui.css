@@ -129,6 +129,17 @@
 .campo__input[aria-invalid='true'] {
   border-color: var(--terracota);
 }
+/* Área de texto e dica: usadas pelo painel admin e pelo do parceiro. */
+.campo__input--area {
+  min-height: 6rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.campo__dica {
+  color: var(--suave);
+  font-size: 14px;
+}
 
 .campo__erro {
   font-size: 14px;

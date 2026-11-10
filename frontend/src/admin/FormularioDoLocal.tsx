@@ -9,6 +9,7 @@ import { EstadoVazio } from '../components/ui/EstadoVazio'
 import { ErroApi } from '../lib/api'
 import { erroDeLatitude, erroDeLongitude } from '../lib/areaDoMapa'
 import { DIAS, ROTULO_TIPO } from '../lib/formatos'
+import { errosDosHorarios, horariosDosTextos, textosDosHorarios } from '../lib/horarios'
 import type { Categoria, LocalAdmin, LocalEntrada, NegocioEntrada, TipoLocal } from '../lib/tipos'
 import { useCarregar } from '../lib/useCarregar'
 import { CaixaDeAviso, type Aviso } from './aviso'
@@ -37,6 +38,8 @@ interface Formulario {
   /** Separados por vírgula. */
   services: string
   is_partner: boolean
+  /** E-mail da conta que edita pelo painel do parceiro; vazio = sem dono. */
+  owner_email: string
   /** Por dia: "07:00-12:00, 14:00-21:00"; vazio = fechado. */
   horarios: Record<string, string>
 }
@@ -53,6 +56,7 @@ const ORDEM = [
   'phone',
   'price_range',
   'services',
+  'owner_email',
   ...DIAS.map(([dia]) => `horarios.${dia}`),
 ] as const
 
@@ -72,6 +76,7 @@ const VAZIO: Formulario = {
   price_range: '',
   services: '',
   is_partner: false,
+  owner_email: '',
   horarios: {},
 }
 
@@ -93,12 +98,8 @@ function doLocal(local: LocalAdmin): Formulario {
     price_range: (negocio?.price_range as Faixa | null) ?? '',
     services: negocio?.services.join(', ') ?? '',
     is_partner: negocio?.is_partner ?? false,
-    horarios: Object.fromEntries(
-      Object.entries(negocio?.opening_hours ?? {}).map(([dia, faixas]) => [
-        dia,
-        faixas.map(([abre, fecha]) => `${abre}-${fecha}`).join(', '),
-      ]),
-    ),
+    owner_email: negocio?.owner_email ?? '',
+    horarios: textosDosHorarios(negocio?.opening_hours ?? null),
   }
 }
 
@@ -106,22 +107,6 @@ function doLocal(local: LocalAdmin): Formulario {
 function numero(texto: string): number {
   const limpo = texto.trim().replace(',', '.')
   return limpo ? Number(limpo) : Number.NaN
-}
-
-const FAIXA_HORARIO = /^([01]\d|2[0-3]):([0-5]\d)\s*[-–]\s*([01]\d|2[0-3]):([0-5]\d)$/
-
-function faixasDoDia(texto: string): [string, string][] | null {
-  const partes = texto
-    .split(',')
-    .map((p) => p.trim())
-    .filter(Boolean)
-  const faixas: [string, string][] = []
-  for (const parte of partes) {
-    const casa = parte.match(FAIXA_HORARIO)
-    if (!casa) return null
-    faixas.push([`${casa[1]}:${casa[2]}`, `${casa[3]}:${casa[4]}`])
-  }
-  return faixas
 }
 
 function validar(f: Formulario): Erros {
@@ -143,38 +128,24 @@ function validar(f: Formulario): Erros {
     }
   }
 
-  if (f.temNegocio) {
-    for (const [dia, nome] of DIAS) {
-      const texto = f.horarios[dia] ?? ''
-      const faixas = faixasDoDia(texto)
-      if (!faixas) {
-        erros[`horarios.${dia}`] = `${nome}: use HH:MM-HH:MM, ex.: 07:00-12:00, 14:00-21:00.`
-      } else if (faixas.some(([abre, fecha]) => abre >= fecha)) {
-        erros[`horarios.${dia}`] = `${nome}: o horário de abrir precisa vir antes do de fechar.`
-      }
-    }
-  }
+  if (f.temNegocio) Object.assign(erros, errosDosHorarios(f.horarios))
   return erros
 }
 
 function paraEntrada(f: Formulario): LocalEntrada {
   let business: NegocioEntrada | null = null
   if (f.temNegocio) {
-    const opening_hours: Record<string, [string, string][]> = {}
-    for (const [dia] of DIAS) {
-      const faixas = faixasDoDia(f.horarios[dia] ?? '') ?? []
-      if (faixas.length) opening_hours[dia] = faixas
-    }
     business = {
       whatsapp: f.whatsapp.trim() || null,
       phone: f.phone.trim() || null,
-      opening_hours: Object.keys(opening_hours).length ? opening_hours : null,
+      opening_hours: horariosDosTextos(f.horarios),
       price_range: f.price_range || null,
       services: f.services
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
       is_partner: f.is_partner,
+      owner_email: f.owner_email.trim() || null,
     }
   }
   return {
@@ -553,6 +524,21 @@ function Edicao({
                 onChange={(e) => mudar('is_partner', e.target.checked)}
                 className="admin-form__largo"
               />
+              <Campo
+                id={idDoCampo('owner_email')}
+                className="admin-form__largo"
+                label="E-mail do dono (opcional)"
+                type="email"
+                inputMode="email"
+                placeholder="dono@exemplo.com"
+                value={f.owner_email}
+                erro={erros.owner_email}
+                onChange={(e) => mudar('owner_email', e.target.value)}
+              />
+              <p className="campo__dica admin-form__largo">
+                A conta precisa existir no app. Ela passa a editar este estabelecimento em
+                /parceiro (descrição, horários, contatos e serviços).
+              </p>
               <div
                 className="admin-form__largo admin-horarios"
                 role="group"

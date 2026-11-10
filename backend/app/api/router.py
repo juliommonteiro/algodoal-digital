@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import admin, auth, carroca, categories, health, places
+from app.api.routes import admin, auth, carroca, categories, health, parceiro, places
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -14,3 +14,5 @@ api_router.include_router(admin.router)
 api_router.include_router(carroca.pedidos)
 api_router.include_router(carroca.contatos)
 api_router.include_router(carroca.painel)
+# Painel do parceiro (#26): o dono edita o próprio estabelecimento.
+api_router.include_router(parceiro.router)

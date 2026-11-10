@@ -7,10 +7,10 @@ saiu. Local criado aqui é dado real (source='campo'): o `seed --reset` nunca o 
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Business, Category, Place
+from app.models import Business, Category, Place, User
 from app.schemas.admin import BusinessWrite, PlaceCreate, PlaceUpdate, StatusAdmin
 from app.services.catalog import arvore_da_categoria
 
@@ -23,6 +23,18 @@ class LocalNaoEncontrado(Exception):
 
 class CategoriaInexistente(Exception):
     pass
+
+
+class DonoInexistente(Exception):
+    """Não há conta com o e-mail informado como dono."""
+
+
+class DonoComOutroPerfil(Exception):
+    """Conta de carroceiro ou admin: cada conta tem um perfil só, e o dono vira parceiro."""
+
+    def __init__(self, perfil: str) -> None:
+        super().__init__(perfil)
+        self.perfil = perfil
 
 
 def listar_locais(
@@ -67,11 +79,36 @@ def _garantir_categoria(db: Session, category_id: uuid.UUID) -> None:
         raise CategoriaInexistente
 
 
-def _aplicar_negocio(local: Place, dados: BusinessWrite | None) -> None:
+def _dono(db: Session, email: str | None) -> User | None:
+    """Conta do dono: turista vira parceiro; parceiro continua. Sem e-mail, sem dono."""
+    if email is None:
+        return None
+    dono = db.scalar(select(User).where(User.email == email.strip().lower()))
+    if dono is None:
+        raise DonoInexistente
+    if dono.role not in ("tourist", "partner"):
+        raise DonoComOutroPerfil(dono.role)
+    dono.role = "partner"
+    return dono
+
+
+def _rebaixar_se_ficou_sem_negocio(db: Session, antigo: User | None, novo: User | None) -> None:
+    """Quem deixou de ser dono e não tem outro estabelecimento volta a ser turista."""
+    if antigo is None or (novo is not None and antigo.id == novo.id) or antigo.role != "partner":
+        return
+    db.flush()
+    if not db.scalar(select(exists().where(Business.owner_id == antigo.id))):
+        antigo.role = "tourist"
+
+
+def _aplicar_negocio(db: Session, local: Place, dados: BusinessWrite | None) -> None:
     """None remove os dados comerciais; um objeto os cria ou substitui por inteiro."""
+    antigo = local.business.owner if local.business else None
     if dados is None:
         local.business = None
+        _rebaixar_se_ficou_sem_negocio(db, antigo, None)
         return
+    dono = _dono(db, dados.owner_email)
     valores = {
         "whatsapp": dados.whatsapp,
         "phone": dados.phone,
@@ -84,12 +121,14 @@ def _aplicar_negocio(local: Place, dados: BusinessWrite | None) -> None:
         "price_range": dados.price_range,
         "services": list(dados.services),
         "is_partner": dados.is_partner,
+        "owner": dono,
     }
     if local.business is None:
         local.business = Business(source=ORIGEM_DO_PAINEL, **valores)
     else:
         for campo, valor in valores.items():
             setattr(local.business, campo, valor)
+    _rebaixar_se_ficou_sem_negocio(db, antigo, dono)
 
 
 def criar_local(db: Session, dados: PlaceCreate) -> Place:
@@ -105,7 +144,7 @@ def criar_local(db: Session, dados: PlaceCreate) -> Place:
         source=ORIGEM_DO_PAINEL,
     )
     if dados.business is not None:
-        _aplicar_negocio(local, dados.business)
+        _aplicar_negocio(db, local, dados.business)
     db.add(local)
     db.commit()
     db.refresh(local)
@@ -123,7 +162,7 @@ def atualizar_local(db: Session, place_id: uuid.UUID, dados: PlaceUpdate) -> Pla
     if "is_published" in enviados:
         local.is_published = dados.is_published
     if "business" in enviados:
-        _aplicar_negocio(local, dados.business)
+        _aplicar_negocio(db, local, dados.business)
     db.commit()
     db.refresh(local)
     return local

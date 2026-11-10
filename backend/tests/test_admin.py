@@ -170,6 +170,7 @@ def test_criar_editar_e_remover_logicamente(db, api, admin):
         "price_range": None,
         "services": [],
         "is_partner": True,
+        "owner_email": None,
     }
     assert editado.json()["kind"] == "business"  # o que não veio não muda
 
