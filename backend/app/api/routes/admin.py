@@ -9,8 +9,9 @@ from app.db.session import get_db
 from app.models import Place
 from app.schemas.admin import PlaceAdminRead, PlaceCreate, PlaceUpdate, StatusAdmin
 from app.schemas.category import CategoryRead
+from app.schemas.indicadores import Indicadores
 from app.schemas.place import PlaceKind
-from app.services import admin_catalog, catalog
+from app.services import admin_catalog, catalog, indicadores
 
 # O perfil é exigido no router inteiro: rota nova aqui não nasce desprotegida.
 # Sem token: 401; com token de outro perfil: 403.
@@ -97,6 +98,11 @@ def remover_local(place_id: uuid.UUID, db: Db) -> PlaceAdminRead:
 def restaurar_local(place_id: uuid.UUID, db: Db) -> PlaceAdminRead:
     _local(db, place_id)
     return _ler(admin_catalog.restaurar_local(db, place_id))
+
+
+@router.get("/indicators", summary="Indicadores do piloto (usuários, locais, carroça)")
+def obter_indicadores(db: Db) -> Indicadores:
+    return indicadores.calcular(db)
 
 
 @router.get("/categories", summary="Categorias, para os seletores do painel")

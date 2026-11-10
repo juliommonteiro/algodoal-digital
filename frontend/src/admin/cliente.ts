@@ -11,6 +11,7 @@ import type {
   Categoria,
   ClienteAdmin,
   FiltrosAdmin,
+  Indicadores,
   LocalAdmin,
   LocalEntrada,
   StatusAdmin,
@@ -58,6 +59,7 @@ async function eEsquecer(pedido: Promise<LocalAdmin>): Promise<LocalAdmin> {
 }
 
 export const clienteAdminHttp: ClienteAdmin = {
+  indicadores: () => requisitar<Indicadores>('GET', '/admin/indicators'),
   locais: (filtros) => requisitar<LocalAdmin[]>('GET', `/admin/places${consulta(filtros)}`),
   local: (localId) => requisitar<LocalAdmin>('GET', `/admin/places/${id(localId)}`),
   criar: (dados) => eEsquecer(requisitar<LocalAdmin>('POST', '/admin/places', dados)),
@@ -105,6 +107,70 @@ function recusar(erros: Record<string, string>): Promise<never> {
 }
 
 export const clienteAdminMock: ClienteAdmin = {
+  // Mesmas contas da API (services/indicadores.py), sobre o "banco" do mock.
+  indicadores() {
+    const { usuarios, locais, carroceiros, pedidos } = bancoDoMock()
+    const agora = Date.now()
+    const semana = pedidos.filter((p) => Date.parse(p.created_at) >= agora - 7 * 86_400_000)
+    const aceitos = semana.filter((p) => p.status === 'accepted')
+    const vencidos = semana.filter((p) => p.status === 'expired')
+    const minutos = aceitos
+      .filter((p) => p.responded_at)
+      .map((p) => (Date.parse(p.responded_at!) - Date.parse(p.created_at)) / 60_000)
+    const perfil = (role: string) => usuarios.filter((u) => u.role === role).length
+    const vivos = locais.filter((l) => !l.deleted_at)
+    const hoje = new Date().toDateString()
+    return responder<Indicadores>({
+      gerado_em: new Date().toISOString(),
+      usuarios: {
+        total: usuarios.length,
+        ativos_30_dias: 0, // o mock não guarda sessões
+        turistas: perfil('tourist'),
+        carroceiros: perfil('carrier'),
+        parceiros: perfil('partner'),
+        admins: perfil('admin'),
+      },
+      locais: {
+        publicados: vivos.filter((l) => l.is_published).length,
+        rascunhos: vivos.filter((l) => !l.is_published).length,
+        removidos: locais.length - vivos.length,
+        estabelecimentos: vivos.filter((l) => l.business).length,
+        // owner_email chega com o painel do parceiro (#60); antes dele, ninguém tem dono.
+        estabelecimentos_com_dono: vivos.filter(
+          (l) => (l.business as { owner_email?: string | null } | null)?.owner_email,
+        ).length,
+        com_foto: vivos.filter((l) => l.photos.length).length,
+      },
+      carroceiros: {
+        total: carroceiros.filter((c) => c.is_approved).length,
+        disponiveis: carroceiros.filter((c) => c.is_approved && c.is_available).length,
+      },
+      pedidos: {
+        total: pedidos.length,
+        ultimos_7_dias: semana.length,
+        aceitos_7_dias: aceitos.length,
+        taxa_de_aceite_7_dias:
+          aceitos.length + vencidos.length
+            ? aceitos.length / (aceitos.length + vencidos.length)
+            : null,
+        minutos_ate_aceite_7_dias: minutos.length
+          ? Math.round((minutos.reduce((a, b) => a + b, 0) / minutos.length) * 10) / 10
+          : null,
+      },
+      pedidos_de_hoje: pedidos
+        .filter((p) => new Date(p.created_at).toDateString() === hoje)
+        .reverse()
+        .map(({ id, origin, destination, passengers, status, created_at }) => ({
+          id,
+          origin,
+          destination,
+          passengers,
+          status,
+          created_at,
+        })),
+    })
+  },
+
   locais(filtros) {
     const { categorias, locais } = bancoDoMock()
     let lista = locais

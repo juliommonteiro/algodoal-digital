@@ -321,3 +321,62 @@ describe('formulário do local', () => {
     expect(await screen.findByRole('heading', { name: 'Local não encontrado' })).toBeInTheDocument()
   })
 })
+
+describe('indicadores', () => {
+  function indicador(rotulo: string) {
+    const item = screen.getByText(rotulo, { selector: '.admin-indicador__rotulo' }).closest('li')!
+    return within(item)
+  }
+
+  it('mostra os indicadores do mock e marca a seção na barra lateral', async () => {
+    const agora = new Date()
+    bancoDoMock().pedidos.push(
+      {
+        id: 'p1', tourist_id: 't', tourist_name: 'Ana', tourist_whatsapp: '(91) 97777-1111',
+        carrier_user_id: 'c', origin: 'Orla', destination: 'Praia da Princesa', passengers: 2,
+        notes: null, status: 'accepted', created_at: new Date(agora.getTime() - 4 * 60_000).toISOString(),
+        responded_at: new Date(agora.getTime() - 60_000).toISOString(),
+      },
+      {
+        id: 'p2', tourist_id: 't', tourist_name: 'Ana', tourist_whatsapp: '(91) 97777-1111',
+        carrier_user_id: null, origin: 'Trapiche', destination: 'Pousada', passengers: 1,
+        notes: null, status: 'expired', created_at: agora.toISOString(), responded_at: null,
+      },
+    )
+    simularSessao(ADMIN)
+    renderizarEm('/admin/indicadores')
+
+    expect(await screen.findByRole('heading', { name: 'Indicadores do piloto' })).toBeInTheDocument()
+    const lateral = screen.getByRole('complementary', { name: 'Seções do painel' })
+    expect(within(lateral).getByRole('link', { name: 'Indicadores' })).toHaveAttribute('aria-current', 'page')
+    expect(within(lateral).getByRole('link', { name: 'Locais' })).not.toHaveAttribute('aria-current')
+
+    expect(indicador('carroceiros').getByText('3')).toBeInTheDocument() // Tião não está aprovado
+    expect(indicador('carroceiros').getByText('2 disponíveis agora')).toBeInTheDocument()
+    expect(indicador('solicitações de carroça').getByText('2')).toBeInTheDocument()
+    expect(indicador('aceitas na semana').getByText('50%')).toBeInTheDocument()
+    expect(indicador('aceitas na semana').getByText(/em média 3 min/)).toBeInTheDocument()
+    // Os de gamificação não têm número inventado.
+    expect(indicador('missões realizadas').getByText('chega com o passaporte')).toBeInTheDocument()
+
+    const hoje = screen.getByRole('region', { name: 'Solicitações de carroça · hoje' })
+    expect(within(hoje).getByText(/Orla → Praia da Princesa/)).toBeInTheDocument()
+    expect(within(hoje).getByText('Aceita')).toBeInTheDocument()
+    expect(within(hoje).getByText('Venceu')).toBeInTheDocument()
+  })
+
+  it('sem pedidos, a taxa fica em branco e a lista diz que não houve', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/indicadores')
+
+    expect(await screen.findByText('Nenhuma solicitação hoje.')).toBeInTheDocument()
+    expect(indicador('aceitas na semana').getByText('—')).toBeInTheDocument()
+  })
+
+  it('em /admin e nos formulários, a seção marcada é Locais', async () => {
+    await abrirLista()
+
+    const lateral = screen.getByRole('complementary', { name: 'Seções do painel' })
+    expect(within(lateral).getByRole('link', { name: 'Locais' })).toHaveAttribute('aria-current', 'page')
+  })
+})

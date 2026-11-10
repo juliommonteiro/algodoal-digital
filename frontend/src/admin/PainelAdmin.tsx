@@ -1,6 +1,7 @@
-import { Link, NavLink, Navigate, useParams } from 'react-router'
+import { Link, Navigate, useParams } from 'react-router'
 import { useAuth } from '../auth/contexto'
 import { FormularioDoLocal } from './FormularioDoLocal'
+import { Indicadores } from './Indicadores'
 import { ListaDeLocais } from './ListaDeLocais'
 import './admin.css'
 
@@ -17,8 +18,13 @@ const EM_BREVE: [secao: string, quando: string][] = [
  * o <Routes> traria código do react-router para o bundle principal (onde o roteador mora),
  * e o painel não pode fazer o app do turista crescer.
  */
+function useSecao(): string[] {
+  return (useParams()['*'] ?? '').split('/').filter(Boolean)
+}
+
 function Tela() {
-  const partes = (useParams()['*'] ?? '').split('/').filter(Boolean)
+  const partes = useSecao()
+  if (partes.length === 1 && partes[0] === 'indicadores') return <Indicadores />
   if (partes.length === 0 || (partes.length === 1 && partes[0] === 'locais')) {
     return <ListaDeLocais />
   }
@@ -35,6 +41,9 @@ function Tela() {
  */
 export default function PainelAdmin() {
   const { usuario } = useAuth()
+  const [secao = 'locais'] = useSecao()
+  const classe = (nome: string) =>
+    secao === nome ? 'admin__item admin__item--ativo' : 'admin__item'
 
   return (
     <div className="admin">
@@ -43,10 +52,23 @@ export default function PainelAdmin() {
         <nav>
           <ul className="admin__menu">
             <li>
-              {/* Única seção pronta: fica marcada também em /admin e nos formulários. */}
-              <NavLink to="/admin/locais" className="admin__item admin__item--ativo">
+              <Link
+                to="/admin/indicadores"
+                className={classe('indicadores')}
+                aria-current={secao === 'indicadores' ? 'page' : undefined}
+              >
+                Indicadores
+              </Link>
+            </li>
+            <li>
+              {/* Link, e não NavLink: o NavLink tiraria o aria-current em /admin, que também é Locais. */}
+              <Link
+                to="/admin/locais"
+                className={classe('locais')}
+                aria-current={secao === 'locais' ? 'page' : undefined}
+              >
                 Locais
-              </NavLink>
+              </Link>
             </li>
             {EM_BREVE.map(([secao, quando]) => (
               <li key={secao}>
