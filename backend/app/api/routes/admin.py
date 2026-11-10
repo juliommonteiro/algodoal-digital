@@ -10,8 +10,9 @@ from app.db.session import get_db
 from app.models import Place
 from app.schemas.admin import PlaceAdminRead, PlaceCreate, PlaceUpdate, StatusAdmin
 from app.schemas.category import CategoryRead
+from app.schemas.indicadores import Indicadores
 from app.schemas.place import PlaceKind
-from app.services import admin_catalog, catalog
+from app.services import admin_catalog, catalog, indicadores
 
 # O perfil é exigido no router inteiro: rota nova aqui não nasce desprotegida.
 # Sem token: 401; com token de outro perfil: 403.
@@ -138,3 +139,8 @@ registrar_rotas_de_fotos(router, _local_do_admin)
 @router.get("/categories", summary="Categorias, para os seletores do painel")
 def listar_categorias(db: Db) -> list[CategoryRead]:
     return [CategoryRead.model_validate(c) for c in catalog.listar_categorias(db)]
+
+
+@router.get("/indicators", summary="Indicadores do piloto (usuários, locais, carroça)")
+def obter_indicadores(db: Db) -> Indicadores:
+    return indicadores.calcular(db)

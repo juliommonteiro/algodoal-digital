@@ -259,7 +259,46 @@ export interface FiltrosAdmin {
   status?: StatusAdmin
 }
 
+/** GET /admin/indicators (#40, protótipo 13). Backend: schemas/indicadores.py. */
+export interface Indicadores {
+  gerado_em: string
+  usuarios: {
+    total: number
+    ativos_30_dias: number
+    turistas: number
+    carroceiros: number
+    parceiros: number
+    admins: number
+  }
+  locais: {
+    publicados: number
+    rascunhos: number
+    removidos: number
+    estabelecimentos: number
+    estabelecimentos_com_dono: number
+    com_foto: number
+  }
+  carroceiros: { total: number; disponiveis: number }
+  pedidos: {
+    total: number
+    ultimos_7_dias: number
+    aceitos_7_dias: number
+    /** 0 a 1; null sem pedidos aceitos nem vencidos na semana. */
+    taxa_de_aceite_7_dias: number | null
+    minutos_ate_aceite_7_dias: number | null
+  }
+  pedidos_de_hoje: {
+    id: string
+    origin: string
+    destination: string
+    passengers: number
+    status: StatusPedido
+    created_at: string
+  }[]
+}
+
 export interface ClienteAdmin {
+  indicadores(): Promise<Indicadores>
   locais(filtros?: FiltrosAdmin): Promise<LocalAdmin[]>
   local(id: string): Promise<LocalAdmin>
   criar(dados: LocalEntrada): Promise<LocalAdmin>

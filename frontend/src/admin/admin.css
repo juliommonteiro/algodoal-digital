@@ -352,3 +352,75 @@
     padding: var(--e-4);
   }
 }
+
+/* ---------- Indicadores (#40, protótipo 13) ---------- */
+.admin-indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1px;
+  margin: 0 0 var(--e-6);
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--borda); /* o gap de 1px vira a linha entre os blocos */
+}
+.admin-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  padding: var(--e-4);
+  background: var(--superficie);
+}
+.admin-indicador__valor {
+  color: var(--tinta);
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.admin-indicador__rotulo {
+  color: var(--tinta-2);
+  font-size: 15px;
+}
+.admin-indicador__detalhe {
+  color: var(--suave);
+  font-size: 13px;
+}
+.admin-indicador--depois .admin-indicador__valor {
+  color: var(--suave);
+}
+.admin-bloco {
+  margin-bottom: var(--e-5);
+  padding: var(--e-4);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+.admin-bloco h2 {
+  margin: 0 0 var(--e-3);
+  font-size: 17px;
+}
+.admin-bloco--depois {
+  background: var(--fundo);
+}
+.admin-pedidos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-pedidos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  padding: var(--e-3) 0;
+}
+.admin-pedidos li + li {
+  border-top: 1px solid var(--borda);
+}
+.admin-pedidos__detalhe {
+  color: var(--suave);
+  font-size: 14px;
+}
