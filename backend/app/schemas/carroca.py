@@ -73,6 +73,8 @@ class PerfilCarroceiro(BaseModel):
     whatsapp: str | None
     capacity: int
     is_available: bool
+    # False = suspenso pelo admin: o painel avisa e não recebe pedidos.
+    is_approved: bool
 
 
 class PerfilCarroceiroUpdate(BaseModel):

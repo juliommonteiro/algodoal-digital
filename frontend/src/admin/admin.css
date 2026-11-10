@@ -57,16 +57,6 @@
   color: var(--tinta);
   font-weight: 700;
 }
-.admin__item--off {
-  color: var(--suave);
-  cursor: not-allowed;
-}
-.admin__quando {
-  font-family: var(--fonte-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
 
 .admin__rodape {
   display: flex;
@@ -423,4 +413,43 @@
 .admin-pedidos__detalhe {
   color: var(--suave);
   font-size: 14px;
+}
+
+/* ---------- Usuários e carroceiros ---------- */
+.admin-filtros--tres {
+  grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(9rem, 1fr));
+}
+.admin-filtros--dois {
+  grid-template-columns: minmax(14rem, 2fr) minmax(9rem, 1fr);
+}
+.admin-tabela__sub {
+  display: block;
+  color: var(--suave);
+  font-size: 13px;
+  font-weight: 400;
+}
+.admin-tag {
+  margin-left: var(--e-2);
+  padding: 0 var(--e-2);
+  border-radius: 999px;
+  background: var(--fundo);
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-tabela__edicao td {
+  background: var(--fundo);
+}
+.admin-edicao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  align-items: end;
+  gap: var(--e-3);
+}
+.admin-edicao__acoes {
+  display: flex;
+  gap: var(--e-2);
+}
+.admin-tabela__sem-quebra {
+  white-space: nowrap;
 }

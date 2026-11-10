@@ -136,10 +136,12 @@ export interface PerfilCarroceiro {
   whatsapp: string | null
   capacity: number
   is_available: boolean
+  /** false = suspenso pelo admin: não recebe pedidos. */
+  is_approved: boolean
 }
 
 /** GET /carriers: para chamar direto pelo WhatsApp, inclusive sem internet. */
-export type ContatoCarroceiro = PerfilCarroceiro
+export type ContatoCarroceiro = Omit<PerfilCarroceiro, 'is_approved'>
 
 export interface ClienteCarroca {
   pedir(pedido: PedidoEntrada): Promise<PedidoDoTurista>
@@ -297,8 +299,67 @@ export interface Indicadores {
   }[]
 }
 
+/** Usuário como o painel admin vê (GET /admin/users). Backend: UsuarioAdminRead. */
+export interface UsuarioAdmin {
+  id: string
+  name: string
+  email: string
+  role: Perfil
+  is_active: boolean
+  created_at: string
+  estabelecimentos: number
+  tem_perfil_de_carroceiro: boolean
+}
+
+export type StatusConta = 'ativa' | 'desativada'
+
+export interface FiltrosUsuarios {
+  perfil?: Perfil
+  status?: StatusConta
+  q?: string
+}
+
+/** PATCH /admin/users/{id}: o perfil só alterna entre turista e admin. */
+export interface UsuarioAdminEntrada {
+  is_active?: boolean
+  role?: 'tourist' | 'admin'
+}
+
+/** Carroceiro como o painel admin vê (GET /admin/carriers). Backend: CarroceiroAdminRead. */
+export interface CarroceiroAdmin {
+  id: string
+  user_id: string
+  display_name: string
+  email: string
+  whatsapp: string | null
+  capacity: number
+  is_available: boolean
+  is_approved: boolean
+  conta_ativa: boolean
+  viagens_7_dias: number
+  created_at: string
+}
+
+export type StatusCarroceiro = 'aprovado' | 'suspenso'
+
+export interface FiltrosCarroceiros {
+  status?: StatusCarroceiro
+  q?: string
+}
+
+export interface CarroceiroAdminEntrada {
+  display_name?: string
+  whatsapp?: string
+  capacity?: number
+  is_approved?: boolean
+}
+
 export interface ClienteAdmin {
   indicadores(): Promise<Indicadores>
+  usuarios(filtros?: FiltrosUsuarios): Promise<UsuarioAdmin[]>
+  atualizarUsuario(id: string, mudancas: UsuarioAdminEntrada): Promise<UsuarioAdmin>
+  carroceiros(filtros?: FiltrosCarroceiros): Promise<CarroceiroAdmin[]>
+  atualizarCarroceiro(id: string, mudancas: CarroceiroAdminEntrada): Promise<CarroceiroAdmin>
   locais(filtros?: FiltrosAdmin): Promise<LocalAdmin[]>
   local(id: string): Promise<LocalAdmin>
   criar(dados: LocalEntrada): Promise<LocalAdmin>

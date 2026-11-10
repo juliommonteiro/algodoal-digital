@@ -99,6 +99,18 @@ describe('painel do carroceiro', () => {
     expect(screen.queryByRole('article')).not.toBeInTheDocument()
   })
 
+  it('suspenso pelo admin vê o aviso e não recebe pedidos', async () => {
+    pedidoNoMock()
+    const perfil = bancoDoMock().carroceiros.find((c) => c.user_id === CARROCEIRO.id)!
+    Object.assign(perfil, { is_approved: false, is_available: false })
+    simularSessao(CARROCEIRO)
+    renderizarEm('/carroceiro')
+
+    expect(await screen.findByText(/Seu perfil de carroceiro está suspenso/)).toBeInTheDocument()
+    expect(screen.queryByRole('article')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+  })
+
   it('turista não entra no painel', async () => {
     simularSessao()
     renderizarEm('/carroceiro')

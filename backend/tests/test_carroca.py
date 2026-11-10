@@ -298,6 +298,7 @@ def test_carroceiro_ve_e_muda_o_proprio_perfil(api, bento):
         "whatsapp": "(91) 98888-0001",
         "capacity": 4,
         "is_available": True,
+        "is_approved": True,
     }
 
     mudou = api.patch(
