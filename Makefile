@@ -10,7 +10,7 @@ migrate:       ## Aplica migrações
 	docker compose exec api alembic upgrade head
 revision:      ## make revision m="cria tabela places"
 	docker compose exec api alembic revision --autogenerate -m "$(m)"
-seed:          ## Popula o banco com dados fictícios (make seed args="--reset")
+seed:          ## Catálogo inicial (só em banco sem locais) e contas de teste
 	docker compose exec api python -m scripts.seed $(args)
 test:
 	docker compose exec api pytest

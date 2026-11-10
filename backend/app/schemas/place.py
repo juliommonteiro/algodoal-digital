@@ -44,7 +44,7 @@ class BusinessRead(BaseModel):
 
 
 class PlaceRead(BaseModel):
-    """Contrato: `Local`. `source` (marca de dado fictício) e `deleted_at` são internos."""
+    """Contrato: `Local`. `source` (origem do dado) e `deleted_at` são internos."""
 
     model_config = ConfigDict(from_attributes=True)
 

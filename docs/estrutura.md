@@ -48,7 +48,7 @@ frontend/src/
 │   ├── api.ts                  cliente HTTP, ErroApi (com erros por campo) e token de acesso
 │   ├── api.test.ts             testes da conversão dos erros da API
 │   ├── cliente.ts              escolhe entre API real e mock (VITE_USAR_MOCK)
-│   ├── mock.ts                 API de mentira com os mesmos dados fictícios do seed
+│   ├── mock.ts                 API de mentira com os mesmos dados do catálogo inicial do seed
 │   ├── mock.test.ts            testes do mock
 │   ├── catalogo.ts             carrega categorias e locais, filtra e guarda filtros na URL
 │   ├── catalogo.test.ts        testes do filtro do catálogo
