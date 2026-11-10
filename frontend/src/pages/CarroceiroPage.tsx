@@ -142,7 +142,7 @@ export function CarroceiroPage() {
             <button
               type="button"
               role="switch"
-              className="carroceiro__chave"
+              className="chave"
               aria-checked={estado.perfil.is_available}
               aria-label="Disponível para viagens"
               aria-describedby="estado-disponivel"

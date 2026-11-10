@@ -67,9 +67,10 @@ frontend/src/
 │   ├── AcessoPage.tsx          login
 │   ├── CadastroPage.tsx        criar conta
 │   ├── AdminPage.tsx           carrega o painel sob demanda e avisa quando não abre sem rede
-│   ├── CarrocaPage.tsx         pedido de carroça (placeholder até a S10)
-│   ├── PassaportePage.tsx      passaporte (placeholder até a S11)
-│   ├── EmBrevePage.tsx         placeholder das áreas de carroceiro e parceiro
+│   ├── CarrocaPage.tsx         pedido de carroça do turista (#32)
+│   ├── CarroceiroPage.tsx      painel do carroceiro: disponibilidade, aceitar e recusar (#33)
+│   ├── ParceiroPage.tsx        painel do parceiro: edita o próprio estabelecimento (#26)
+│   ├── PassaportePage.tsx      passaporte (placeholder)
 │   └── NotFoundPage.tsx        página não encontrada
 ├── styles/                     estilos globais
 │   ├── tokens.css              cores, espaçamentos, raios e alvo de toque

@@ -724,7 +724,7 @@
   margin: var(--e-1) 0 0;
   color: var(--tinta-2);
 }
-.carroceiro__chave {
+.chave {
   position: relative;
   flex: none;
   width: 64px;
@@ -734,7 +734,7 @@
   background: var(--borda);
   transition: background 0.15s;
 }
-.carroceiro__chave span {
+.chave span {
   position: absolute;
   top: 4px;
   left: 4px;
@@ -745,10 +745,10 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
   transition: transform 0.15s;
 }
-.carroceiro__chave[aria-checked='true'] {
+.chave[aria-checked='true'] {
   background: var(--verde);
 }
-.carroceiro__chave[aria-checked='true'] span {
+.chave[aria-checked='true'] span {
   transform: translateX(28px);
 }
 .carroceiro__bloco {
@@ -786,4 +786,60 @@
 .carroceiro__lugar {
   font-size: 24px;
   font-weight: 700;
+}
+
+/* ------------------------------------------------------------------------------------------
+   Painel do parceiro (#26). Protótipo 09.
+   ------------------------------------------------------------------------------------------ */
+.parceiro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-4);
+  max-width: 560px;
+}
+.parceiro__cabecalho h1 {
+  font-size: 28px;
+}
+.parceiro__aviso {
+  padding: var(--e-3);
+  border-left: 4px solid var(--verde);
+  border-radius: 4px;
+  background: var(--fundo);
+  color: var(--tinta);
+}
+.parceiro__fixos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  padding: var(--e-4);
+}
+.parceiro__fixos dl {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.parceiro__fixos dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  padding: var(--e-3) 0;
+}
+.parceiro__fixos dl > div + div {
+  border-top: 1px solid var(--borda);
+}
+.parceiro__fixos dd {
+  margin: 0;
+  font-weight: 600;
+}
+.parceiro__horarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  margin: 0;
+  padding: var(--e-4);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+.parceiro__horarios legend {
+  padding: 0 var(--e-1);
 }

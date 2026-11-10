@@ -53,6 +53,27 @@ def _categoria_inexistente() -> HTTPException:
     )
 
 
+def _dono_invalido(mensagem: str) -> HTTPException:
+    return HTTPException(
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail=[{"loc": ["body", "business", "owner_email"], "msg": mensagem, "type": "dono"}],
+    )
+
+
+PERFIL = {"carrier": "carroceiro", "admin": "admin"}
+
+
+def _erro_de_dono(exc: Exception) -> HTTPException:
+    if isinstance(exc, admin_catalog.DonoComOutroPerfil):
+        return _dono_invalido(
+            f"Esta conta é de {PERFIL.get(exc.perfil, exc.perfil)}. O dono precisa ser uma "
+            "conta de turista (que vira parceira) ou de parceiro."
+        )
+    return _dono_invalido(
+        "Não há conta com esse e-mail. Peça para a pessoa criar a conta no app primeiro."
+    )
+
+
 @router.get("/places", summary="Todos os locais, inclusive não publicados e removidos")
 def listar_locais(
     db: Db,
@@ -71,6 +92,9 @@ def criar_local(dados: PlaceCreate, db: Db) -> PlaceAdminRead:
         return _ler(admin_catalog.criar_local(db, dados))
     except admin_catalog.CategoriaInexistente as exc:
         raise _categoria_inexistente() from exc
+    except (admin_catalog.DonoInexistente, admin_catalog.DonoComOutroPerfil) as exc:
+        db.rollback()
+        raise _erro_de_dono(exc) from exc
 
 
 @router.get("/places/{place_id}", summary="Detalhe, mesmo de não publicado", responses=_404)
@@ -85,6 +109,9 @@ def atualizar_local(place_id: uuid.UUID, dados: PlaceUpdate, db: Db) -> PlaceAdm
         return _ler(admin_catalog.atualizar_local(db, place_id, dados))
     except admin_catalog.CategoriaInexistente as exc:
         raise _categoria_inexistente() from exc
+    except (admin_catalog.DonoInexistente, admin_catalog.DonoComOutroPerfil) as exc:
+        db.rollback()
+        raise _erro_de_dono(exc) from exc
 
 
 @router.delete("/places/{place_id}", summary="Remoção lógica (preenche deleted_at)", responses=_404)

@@ -6,14 +6,17 @@ import { requisitar } from '../lib/api'
 import { idsDaArvore } from '../lib/categorias'
 import { erroDeLatitude, erroDeLongitude } from '../lib/areaDoMapa'
 import { usandoMock } from '../lib/cliente'
-import { bancoDoMock, falhar, responder } from '../lib/mock'
+import { bancoDoMock, contaDoMock, falhar, responder } from '../lib/mock'
 import type {
   Categoria,
   ClienteAdmin,
   FiltrosAdmin,
   LocalAdmin,
   LocalEntrada,
+  NegocioAdmin,
+  NegocioEntrada,
   StatusAdmin,
+  Usuario,
 } from '../lib/tipos'
 
 const id = encodeURIComponent
@@ -104,6 +107,47 @@ function recusar(erros: Record<string, string>): Promise<never> {
   return falhar(422, Object.values(erros)[0], erros)
 }
 
+const PERFIL: Partial<Record<Usuario['role'], string>> = { carrier: 'carroceiro', admin: 'admin' }
+
+/** Mesmas regras da API (admin_catalog._dono): turista vira parceiro, outro perfil não pode. */
+function erroDoDono(dados: Partial<LocalEntrada>): Record<string, string> {
+  const email = dados.business?.owner_email
+  if (!email) return {}
+  const conta = contaDoMock(email)
+  if (!conta) {
+    return {
+      'business.owner_email':
+        'Não há conta com esse e-mail. Peça para a pessoa criar a conta no app primeiro.',
+    }
+  }
+  const perfil = PERFIL[conta.role]
+  if (perfil) {
+    return {
+      'business.owner_email': `Esta conta é de ${perfil}. O dono precisa ser uma conta de turista (que vira parceira) ou de parceiro.`,
+    }
+  }
+  return {}
+}
+
+/** Liga o dono novo (vira parceiro) e rebaixa o antigo se ele ficou sem estabelecimento. */
+function trocarDono(antigo: string | null, novo: string | null): void {
+  const email = (valor: string | null) => valor?.trim().toLowerCase() ?? null
+  const contaNova = novo ? contaDoMock(novo) : undefined
+  if (contaNova) contaNova.role = 'partner'
+  const contaAntiga = antigo ? contaDoMock(antigo) : undefined
+  if (!contaAntiga || contaAntiga === contaNova || contaAntiga.role !== 'partner') return
+  const aindaDono = bancoDoMock().locais.some(
+    (l) => email(l.business?.owner_email ?? null) === contaAntiga.email,
+  )
+  if (!aindaDono) contaAntiga.role = 'tourist'
+}
+
+function negocioComDono(negocio: NegocioEntrada | null): NegocioAdmin | null {
+  if (!negocio) return null
+  const owner_email = negocio.owner_email?.trim().toLowerCase() || null
+  return { ...negocio, owner_email }
+}
+
 export const clienteAdminMock: ClienteAdmin = {
   locais(filtros) {
     const { categorias, locais } = bancoDoMock()
@@ -125,11 +169,12 @@ export const clienteAdminMock: ClienteAdmin = {
 
   criar(dados) {
     const banco = bancoDoMock()
-    const erros = errosDoMock(dados, banco.categorias)
+    const erros = { ...errosDoMock(dados, banco.categorias), ...erroDoDono(dados) }
     if (Object.keys(erros).length) return recusar(erros)
     const agora = new Date().toISOString()
     const local: LocalAdmin = {
       ...dados,
+      business: negocioComDono(dados.business),
       id: crypto.randomUUID(),
       name: dados.name.trim(),
       photos: [],
@@ -139,6 +184,7 @@ export const clienteAdminMock: ClienteAdmin = {
       source: 'campo',
     }
     banco.locais.push(local)
+    trocarDono(null, local.business?.owner_email ?? null)
     return responder(local)
   },
 
@@ -146,9 +192,15 @@ export const clienteAdminMock: ClienteAdmin = {
     const banco = bancoDoMock()
     const local = banco.locais.find((l) => l.id === localId)
     if (!local) return falhar(404, 'Local não encontrado.')
-    const erros = errosDoMock(dados, banco.categorias)
+    const erros = { ...errosDoMock(dados, banco.categorias), ...erroDoDono(dados) }
     if (Object.keys(erros).length) return recusar(erros)
-    Object.assign(local, dados, { updated_at: new Date().toISOString() })
+    const antigo = local.business?.owner_email ?? null
+    const { business, ...resto } = dados
+    Object.assign(local, resto, { updated_at: new Date().toISOString() })
+    if (business !== undefined) {
+      local.business = negocioComDono(business)
+      trocarDono(antigo, local.business?.owner_email ?? null)
+    }
     return responder(local)
   },
 

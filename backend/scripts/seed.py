@@ -346,6 +346,8 @@ CONTAS_DE_TESTE: list[dict[str, Any]] = [
     {"name": "Admin de Teste", "email": "admin@example.com", "role": "admin"},
     {"name": "Turista de Teste", "email": "turista@example.com", "role": "tourist"},
     {"name": "Carroceiro de Teste", "email": "carroceiro@example.com", "role": "carrier"},
+    # Sem estabelecimento: o admin liga a conta a um (e-mail do dono) para testar o /parceiro.
+    {"name": "Parceiro de Teste", "email": "parceiro@example.com", "role": "partner"},
 ]
 PERFIL_DO_CARROCEIRO_DE_TESTE: dict[str, Any] = {
     "display_name": "Carroça de Teste",

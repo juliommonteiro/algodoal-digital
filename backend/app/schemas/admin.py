@@ -6,10 +6,10 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 from pydantic_core import PydanticCustomError
 
-from app.schemas.place import PlaceKind, PlaceRead
+from app.schemas.place import BusinessRead, PlaceKind, PlaceRead
 
 # Área coberta pelo arquivo de tiles (frontend/public/mapa/algodoal.pmtiles, scripts/gerar-mapa.sh).
 # Local fora dela não aparece no mapa — foi esse tipo de erro que pôs um ateliê no mar.
@@ -61,6 +61,33 @@ def _vazio_vira_nulo(valor: Any) -> Any:
     return None if isinstance(valor, str) and not valor.strip() else valor
 
 
+Horarios = dict[str, list[tuple[str, str]]]
+
+
+def validar_horarios(valor: Horarios | None) -> Horarios | None:
+    """{"seg": [["09:00", "22:00"]], ...}; dia ausente = fechado; {} vira None. Usado pelo
+    painel admin e pelo painel do parceiro."""
+    if not valor:
+        return None
+    for dia, faixas in valor.items():
+        if dia not in DIAS:
+            raise PydanticCustomError(
+                "dia_invalido",
+                "O dia '{dia}' não existe (use seg, ter, qua, qui, sex, sab, dom).",
+                {"dia": dia},
+            )
+        for abre, fecha in faixas:
+            if not _HORA.match(abre) or not _HORA.match(fecha):
+                raise PydanticCustomError("hora_invalida", "O horário deve estar no formato HH:MM.")
+            if abre >= fecha:
+                raise PydanticCustomError(
+                    "faixa_invalida",
+                    "Em {dia}, o horário de abrir precisa vir antes do de fechar.",
+                    {"dia": dia},
+                )
+    return valor
+
+
 class BusinessWrite(BaseModel):
     """Dados comerciais de um local, como o painel envia."""
 
@@ -73,33 +100,14 @@ class BusinessWrite(BaseModel):
     price_range: Literal["$", "$$", "$$$"] | None = None
     services: list[Servico] = Field(default_factory=list)
     is_partner: bool = False
+    # Conta que administra o estabelecimento pelo painel do parceiro (#26). Precisa existir;
+    # se for de turista, vira parceira. Vazio = sem dono.
+    owner_email: EmailStr | None = None
 
-    _vazios = field_validator("whatsapp", "phone", "price_range", mode="before")(_vazio_vira_nulo)
-
-    @field_validator("opening_hours")
-    @classmethod
-    def _horarios(cls, valor: dict[str, list[tuple[str, str]]] | None) -> Any:
-        if not valor:
-            return None
-        for dia, faixas in valor.items():
-            if dia not in DIAS:
-                raise PydanticCustomError(
-                    "dia_invalido",
-                    "O dia '{dia}' não existe (use seg, ter, qua, qui, sex, sab, dom).",
-                    {"dia": dia},
-                )
-            for abre, fecha in faixas:
-                if not _HORA.match(abre) or not _HORA.match(fecha):
-                    raise PydanticCustomError(
-                        "hora_invalida", "O horário deve estar no formato HH:MM."
-                    )
-                if abre >= fecha:
-                    raise PydanticCustomError(
-                        "faixa_invalida",
-                        "Em {dia}, o horário de abrir precisa vir antes do de fechar.",
-                        {"dia": dia},
-                    )
-        return valor
+    _vazios = field_validator("whatsapp", "phone", "price_range", "owner_email", mode="before")(
+        _vazio_vira_nulo
+    )
+    _horarios = field_validator("opening_hours")(validar_horarios)
 
 
 class PlaceCreate(BaseModel):
@@ -168,8 +176,16 @@ class PlaceUpdate(BaseModel):
         return None if valor is None else _validar_longitude(valor)
 
 
+class BusinessAdminRead(BusinessRead):
+    """Contrato: `NegocioAdmin`. O painel vê quem é o dono; o público não."""
+
+    owner_email: str | None
+
+
 class PlaceAdminRead(PlaceRead):
-    """O local como o painel vê: com o que o público não vê (remoção, origem do dado)."""
+    """O local como o painel vê: com o que o público não vê (remoção, origem do dado, dono)."""
+
+    business: BusinessAdminRead | None  # type: ignore[assignment]
 
     deleted_at: datetime | None
     source: Literal["ficticio", "campo", "osm"]

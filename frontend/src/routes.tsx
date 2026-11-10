@@ -8,10 +8,10 @@ import { CadastroPage } from './pages/CadastroPage'
 import { CarrocaPage } from './pages/CarrocaPage'
 import { CarroceiroPage } from './pages/CarroceiroPage'
 import { DiretorioPage } from './pages/DiretorioPage'
-import { EmBrevePage } from './pages/EmBrevePage'
 import { LocalPage } from './pages/LocalPage'
 import { MapaPage } from './pages/MapaPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { ParceiroPage } from './pages/ParceiroPage'
 import { PassaportePage } from './pages/PassaportePage'
 import RedesignPreviewPage from './pages/RedesignPreviewPage'
 
@@ -70,12 +70,7 @@ export const routes: RouteObject[] = [
             children: [
               {
                 path: 'parceiro',
-                element: (
-                  <EmBrevePage
-                    titulo="Painel do parceiro"
-                    frase="Editar o perfil do seu estabelecimento (fotos, horários e serviços) chega entre a S7 e a S8."
-                  />
-                ),
+                element: <ParceiroPage />,
               },
             ],
           },

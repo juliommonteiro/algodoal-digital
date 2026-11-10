@@ -230,3 +230,17 @@ def test_conta_de_teste_de_carroceiro_tem_perfil_para_abrir_o_painel(db, api):
     perfil = api.get("/api/v1/carrier/me", headers={"Authorization": f"Bearer {token}"})
     assert perfil.status_code == 200
     assert perfil.json()["is_available"] is True
+
+
+def test_conta_de_teste_de_parceiro_entra_e_abre_o_painel_vazio(db, api):
+    from scripts.seed import SENHA_DE_TESTE
+
+    seed(db)
+
+    login = api.post(
+        "/api/v1/auth/login", json={"email": "parceiro@example.com", "password": SENHA_DE_TESTE}
+    )
+    assert login.json()["user"]["role"] == "partner"
+    token = login.json()["access_token"]
+    painel = api.get("/api/v1/partner/places", headers={"Authorization": f"Bearer {token}"})
+    assert painel.status_code == 200

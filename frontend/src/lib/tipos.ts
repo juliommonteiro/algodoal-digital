@@ -157,6 +157,27 @@ export interface ClienteCarroca {
   viagens(): Promise<PedidoParaCarroceiro[]>
 }
 
+// ---------------------------------------------------------------------------
+// Painel do parceiro (/api/v1/partner, #26)
+// ---------------------------------------------------------------------------
+
+/** PATCH /partner/places/{id}: só o que vier muda. Nome, categoria e posição são do admin. */
+export interface NegocioDoParceiroEntrada {
+  description?: string | null
+  is_published?: boolean
+  whatsapp?: string | null
+  phone?: string | null
+  opening_hours?: Record<string, [string, string][]> | null
+  price_range?: '$' | '$$' | '$$$' | null
+  services?: string[]
+}
+
+export interface ClienteParceiro {
+  /** Os estabelecimentos desta conta, inclusive os fora do mapa. */
+  meus(): Promise<Local[]>
+  atualizar(id: string, mudancas: NegocioDoParceiroEntrada): Promise<Local>
+}
+
 /** O que o cliente real (api.ts) e o mock (mock.ts) implementam. */
 export interface ClienteApi {
   registrar(
@@ -181,10 +202,17 @@ export type StatusAdmin = 'publicado' | 'rascunho' | 'removido'
 export type Origem = 'ficticio' | 'campo' | 'osm'
 
 /** O local como o painel vê: com o que o público não vê. */
+/** Dados comerciais como o painel admin vê: com o dono, que o público não vê. */
+export interface NegocioAdmin extends Negocio {
+  /** Conta que edita pelo painel do parceiro (#26). */
+  owner_email: string | null
+}
+
 export interface LocalAdmin extends Local {
   deleted_at: string | null
   source: Origem
   created_at: string
+  business: NegocioAdmin | null
 }
 
 export interface NegocioEntrada {
@@ -194,6 +222,8 @@ export interface NegocioEntrada {
   price_range: '$' | '$$' | '$$$' | null
   services: string[]
   is_partner: boolean
+  /** A conta precisa existir; se for de turista, vira parceira. null = sem dono. */
+  owner_email: string | null
 }
 
 /** Corpo de POST /admin/places e de PATCH (que aceita só parte). */

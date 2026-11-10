@@ -51,5 +51,10 @@ class Business(UUIDPkMixin, TimestampMixin, Base):
     place: Mapped[Place] = relationship(back_populates="business", single_parent=True)
     owner: Mapped[User | None] = relationship(back_populates="businesses")
 
+    @property
+    def owner_email(self) -> str | None:
+        """Para o painel admin (BusinessAdminRead): quem administra pelo painel do parceiro."""
+        return self.owner.email if self.owner else None
+
     def __repr__(self) -> str:
         return f"<Business place_id={self.place_id}>"
