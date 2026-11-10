@@ -215,3 +215,18 @@ def test_contas_de_teste_entram_e_os_ficticios_nao(db, api):
         "/api/v1/auth/login", json={"email": "davi.admin@example.com", "password": SENHA_DE_TESTE}
     )
     assert ficticio.status_code == 401
+
+
+def test_conta_de_teste_de_carroceiro_tem_perfil_para_abrir_o_painel(db, api):
+    from scripts.seed import SENHA_DE_TESTE
+
+    seed(db)
+    seed(db)  # idempotente: não cria um segundo perfil
+
+    login = api.post(
+        "/api/v1/auth/login", json={"email": "carroceiro@example.com", "password": SENHA_DE_TESTE}
+    )
+    token = login.json()["access_token"]
+    perfil = api.get("/api/v1/carrier/me", headers={"Authorization": f"Bearer {token}"})
+    assert perfil.status_code == 200
+    assert perfil.json()["is_available"] is True

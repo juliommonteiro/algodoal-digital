@@ -7,6 +7,7 @@ from app.models.category import Category
 from app.models.place import Place
 from app.models.place_photo import PlacePhoto
 from app.models.refresh_token import RefreshToken
+from app.models.ride_request import RideDecline, RideRequest
 from app.models.user import User
 
 __all__ = [
@@ -17,5 +18,7 @@ __all__ = [
     "Place",
     "PlacePhoto",
     "RefreshToken",
+    "RideDecline",
+    "RideRequest",
     "User",
 ]

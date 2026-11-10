@@ -19,6 +19,14 @@ export const ADMIN: Usuario = {
   role: 'admin',
 }
 
+/** Carroceiro do seed com perfil aprovado e disponível (Carroça do Bento, até 4 pessoas). */
+export const CARROCEIRO: Usuario = {
+  id: '00000000-0000-4000-c000-000000000002',
+  name: 'Bento Carroça',
+  email: 'bento.carroceiro@example.com',
+  role: 'carrier',
+}
+
 /** Simula uma sessão salva por um login anterior (o que o app acha no localStorage ao abrir). */
 export function simularSessao(usuario: Usuario = TURISTA): SessaoSalva {
   const sessao: SessaoSalva = {

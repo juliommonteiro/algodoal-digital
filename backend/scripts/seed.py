@@ -347,6 +347,13 @@ CONTAS_DE_TESTE: list[dict[str, Any]] = [
     {"name": "Turista de Teste", "email": "turista@example.com", "role": "tourist"},
     {"name": "Carroceiro de Teste", "email": "carroceiro@example.com", "role": "carrier"},
 ]
+PERFIL_DO_CARROCEIRO_DE_TESTE: dict[str, Any] = {
+    "display_name": "Carroça de Teste",
+    "whatsapp": "(91) 95555-0209",
+    "capacity": 4,
+    "is_available": True,
+    "is_approved": True,
+}
 
 
 class SeedEmProducao(RuntimeError):
@@ -486,6 +493,9 @@ def _seed_contas_de_teste(session: Session) -> None:
             or not verificar_senha(SENHA_DE_TESTE, usuario.password_hash)[0]
         ):
             usuario.password_hash = gerar_hash(SENHA_DE_TESTE)
+        # Sem perfil em carriers, a conta de carroceiro entraria mas não teria painel.
+        if usuario.role == "carrier" and usuario.carrier is None:
+            usuario.carrier = Carrier(**PERFIL_DO_CARROCEIRO_DE_TESTE)
     session.flush()
 
 

@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { definirTokenAcesso, ErroApi, obterTokenAcesso } from '../lib/api'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
+import { definirRenovador, definirTokenAcesso, ErroApi, obterTokenAcesso } from '../lib/api'
 import { api } from '../lib/cliente'
 import type { DadosCarroceiro, RespostaLogin, Usuario } from '../lib/tipos'
 import { AuthContexto, type ValorAuth } from './contexto'
@@ -17,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [carregando, setCarregando] = useState(false)
   // Evita duas renovações simultâneas (StrictMode monta o efeito duas vezes, e com refresh
   // token rotativo a segunda chamada usaria um token já invalidado).
-  const renovando = useRef<Promise<void> | null>(null)
+  const renovando = useRef<Promise<boolean> | null>(null)
 
   const aplicar = useCallback((resposta: RespostaLogin): Usuario => {
     definirTokenAcesso(resposta.access_token)
@@ -35,19 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshToken = sessao?.refresh_token ?? null
 
-  useEffect(() => {
-    if (!refreshToken) return
-    const tokenUsado = refreshToken
-
-    function renovar() {
-      if (!navigator.onLine || renovando.current || obterTokenAcesso()) return
-      renovando.current = api
-        .renovar(tokenUsado)
-        .then((resposta) => {
+  /** Uma renovação por vez; true se saiu com um token de acesso novo. */
+  const renovarSessao = useCallback((): Promise<boolean> => {
+    if (renovando.current) return renovando.current
+    const tokenUsado = lerSessao()?.refresh_token
+    if (!tokenUsado || !navigator.onLine) return Promise.resolve(false)
+    renovando.current = api
+      .renovar(tokenUsado)
+      .then(
+        (resposta) => {
           // Se a pessoa saiu (ou entrou com outra conta) enquanto isso, ignora a resposta.
-          if (lerSessao()?.refresh_token === tokenUsado) aplicar(resposta)
-        })
-        .catch((erro: unknown) => {
+          if (lerSessao()?.refresh_token !== tokenUsado) return obterTokenAcesso() !== null
+          aplicar(resposta)
+          return true
+        },
+        (erro: unknown) => {
           if (
             erro instanceof ErroApi &&
             erro.status === 401 &&
@@ -56,16 +66,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sair()
           }
           // Qualquer outra falha (sem rede, 5xx): mantém a sessão local.
-        })
-        .finally(() => {
-          renovando.current = null
-        })
-    }
+          return false
+        },
+      )
+      .finally(() => {
+        renovando.current = null
+      })
+    return renovando.current
+  }, [aplicar, sair])
 
-    renovar()
-    window.addEventListener('online', renovar)
-    return () => window.removeEventListener('online', renovar)
-  }, [refreshToken, aplicar, sair])
+  // Layout, não efeito comum: os efeitos das telas (filhas) rodam antes dos do provider, e a
+  // primeira chamada delas já precisa achar o renovador registrado.
+  useLayoutEffect(() => {
+    definirRenovador(renovarSessao)
+    return () => definirRenovador(null)
+  }, [renovarSessao])
+
+  useEffect(() => {
+    if (!refreshToken) return
+    const renovarSeFaltar = () => {
+      if (!obterTokenAcesso()) void renovarSessao()
+    }
+    renovarSeFaltar()
+    window.addEventListener('online', renovarSeFaltar)
+    return () => window.removeEventListener('online', renovarSeFaltar)
+  }, [refreshToken, renovarSessao])
 
   // Entrou ou saiu em outra aba: acompanha.
   useEffect(() => {

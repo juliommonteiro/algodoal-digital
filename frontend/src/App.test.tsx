@@ -162,7 +162,8 @@ describe('cadastro', () => {
 
     expect(await screen.findByRole('heading', { name: 'Painel do carroceiro' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/carroceiro')
-    expect(screen.getByText(/Seu perfil de carroceiro está ativo/)).toBeInTheDocument()
+    // O painel já abre com o perfil criado no cadastro, disponível e com a capacidade informada.
+    expect(await screen.findByText('Disponível para viagens · até 5 pessoas')).toBeInTheDocument()
     expect(registrar).toHaveBeenCalledWith(
       'Bento da Carroça',
       'bento.novo@example.com',

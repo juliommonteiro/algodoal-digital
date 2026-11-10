@@ -6,6 +6,7 @@ import { AcessoPage } from './pages/AcessoPage'
 import { AdminIndisponivel, AdminPage } from './pages/AdminPage'
 import { CadastroPage } from './pages/CadastroPage'
 import { CarrocaPage } from './pages/CarrocaPage'
+import { CarroceiroPage } from './pages/CarroceiroPage'
 import { DiretorioPage } from './pages/DiretorioPage'
 import { EmBrevePage } from './pages/EmBrevePage'
 import { LocalPage } from './pages/LocalPage'
@@ -60,12 +61,7 @@ export const routes: RouteObject[] = [
             children: [
               {
                 path: 'carroceiro',
-                element: (
-                  <EmBrevePage
-                    titulo="Painel do carroceiro"
-                    frase="Seu perfil de carroceiro está ativo. Receber, aceitar e recusar pedidos de carroça chega na S10."
-                  />
-                ),
+                element: <CarroceiroPage />,
               },
             ],
           },
