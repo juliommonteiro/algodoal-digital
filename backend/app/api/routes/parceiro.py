@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import requer_perfil
+from app.api.fotos import registrar_rotas_de_fotos
 from app.db.session import get_db
-from app.models import User
+from app.models import Place, User
 from app.schemas.parceiro import NegocioDoParceiroUpdate
 from app.schemas.place import PlaceRead
 from app.services import parceiro
@@ -44,6 +45,17 @@ def obter(place_id: uuid.UUID, usuario: Parceiro, db: Db) -> PlaceRead:
         return PlaceRead.model_validate(parceiro.obter(db, usuario, place_id))
     except parceiro.NegocioNaoEncontrado as exc:
         raise _nao_encontrado() from exc
+
+
+def _local_do_parceiro(place_id: uuid.UUID, usuario: Parceiro, db: Db) -> Place:
+    """Só os estabelecimentos desta conta; de outra pessoa ou removido: 404."""
+    try:
+        return parceiro.obter(db, usuario, place_id)
+    except parceiro.NegocioNaoEncontrado as exc:
+        raise _nao_encontrado() from exc
+
+
+registrar_rotas_de_fotos(router, _local_do_parceiro)
 
 
 @router.patch(

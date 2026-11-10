@@ -153,3 +153,16 @@ describe('token de acesso vencido ou ausente', () => {
     expect(await requisitar('POST', '/carrier/requests/1/decline')).toBeUndefined()
   })
 })
+
+describe('envio de foto', () => {
+  it('Blob vai como corpo bruto, com o tipo dele', async () => {
+    responderCom(201, [])
+    const foto = new Blob(['jpeg'], { type: 'image/jpeg' })
+
+    await requisitar('POST', '/admin/places/1/photos', foto)
+
+    const [, opcoes] = vi.mocked(fetch).mock.calls[0]
+    expect(opcoes!.body).toBe(foto)
+    expect((opcoes!.headers as Record<string, string>)['Content-Type']).toBe('image/jpeg')
+  })
+})

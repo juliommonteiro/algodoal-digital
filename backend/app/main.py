@@ -6,6 +6,7 @@ import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 
 from app.api.router import api_router
@@ -82,6 +83,12 @@ def create_app() -> FastAPI:
         )
         return response
 
+    # Fotos dos locais (#29). check_dir=False: a pasta nasce no primeiro upload.
+    app.mount(
+        f"{settings.api_prefix}/media",
+        StaticFiles(directory=settings.media_dir, check_dir=False),
+        name="media",
+    )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, ao_estourar_limite)
     app.include_router(api_router, prefix=settings.api_prefix)

@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router'
 import { FalhaCarga } from '../components/FalhaCarga'
 import { Botao } from '../components/ui/Botao'
 import { Campo } from '../components/ui/Campo'
+import { GerenciarFotos } from '../components/GerenciarFotos'
 import { Carregando } from '../components/ui/Carregando'
 import { classesBotao } from '../components/ui/classes'
 import { EstadoVazio } from '../components/ui/EstadoVazio'
 import { ErroApi } from '../lib/api'
 import { erroDeLatitude, erroDeLongitude } from '../lib/areaDoMapa'
 import { DIAS, ROTULO_TIPO } from '../lib/formatos'
+import { clienteDeFotos } from '../lib/fotos'
 import { errosDosHorarios, horariosDosTextos, textosDosHorarios } from '../lib/horarios'
 import type { Categoria, LocalAdmin, LocalEntrada, NegocioEntrada, TipoLocal } from '../lib/tipos'
 import { useCarregar } from '../lib/useCarregar'
@@ -16,6 +18,8 @@ import { CaixaDeAviso, type Aviso } from './aviso'
 import { AreaDeTexto, Caixa, Selecao } from './campos'
 import { apiAdmin, statusDoLocal } from './cliente'
 import { opcoesDeCategoria, ROTULO_STATUS } from './opcoes'
+
+const fotosDoAdmin = clienteDeFotos('admin')
 
 // ---------------------------------------------------------------------------
 // Estado do formulário: tudo texto, como o usuário digita; vira LocalEntrada só ao enviar.
@@ -578,6 +582,19 @@ function Edicao({
           </Link>
         </div>
       </form>
+
+      {/* Fotos (#29) precisam do local já criado: aparecem na edição, e valem na hora. */}
+      {atual && (
+        <div className="admin-form__secao">
+          <GerenciarFotos
+            localId={atual.id}
+            nome={atual.name}
+            fotos={atual.photos}
+            cliente={fotosDoAdmin}
+            aoMudar={(photos) => setAtual((antes) => (antes ? { ...antes, photos } : antes))}
+          />
+        </div>
+      )}
     </section>
   )
 }

@@ -39,7 +39,8 @@ def test_seed_e_idempotente(db):
     segunda = seed(db)
 
     assert primeira == segunda
-    assert all(total > 0 for total in primeira.values())
+    # Fotos de verdade entram pelos painéis (#29): o seed não cria nenhuma.
+    assert all(total > 0 for tabela, total in primeira.items() if tabela != "place_photos")
 
 
 def test_seed_insere_arvore_de_categorias_e_catalogo_inicial(db):
@@ -165,6 +166,39 @@ def test_migracao_tira_a_frase_ficticia_e_passa_o_catalogo_para_a_equipe(db):
     assert locais["Pousada antiga"].business.source == "campo"
     # A frase só sai do fim: no meio do texto é conteúdo de quem escreveu.
     assert do_painel.description == "Ponto fictício é o apelido do lugar."
+
+
+def test_migracao_tira_as_fotos_ficticias_e_renumera(db):
+    from app.models import PlacePhoto
+
+    categoria = seed_categoria_praias(db)
+    local = Place(
+        name="Com fotos",
+        kind="beach",
+        category_id=categoria.id,
+        latitude=Decimal("-0.578260"),
+        longitude=Decimal("-47.580330"),
+        source="campo",
+    )
+    db.add(local)
+    db.flush()
+    db.add_all(
+        [
+            PlacePhoto(place_id=local.id, storage_key="ficticio/x.webp", position=0),
+            PlacePhoto(place_id=local.id, storage_key="places/a.jpg", position=1),
+            PlacePhoto(place_id=local.id, storage_key="places/b.jpg", position=2),
+        ]
+    )
+    db.flush()
+
+    rodar_migracao(db, "tira_as_fotos_ficticias")
+    db.expire_all()
+
+    fotos = sorted(local.photos, key=lambda f: f.position)
+    assert [(f.storage_key, f.position) for f in fotos] == [
+        ("places/a.jpg", 0),
+        ("places/b.jpg", 1),
+    ]
 
 
 def test_seed_recusa_rodar_em_producao_antes_de_escrever(db, monkeypatch):

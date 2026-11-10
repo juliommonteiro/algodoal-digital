@@ -69,6 +69,57 @@ describe('painel do parceiro', () => {
     await waitFor(() => expect(chave).toBeChecked())
   })
 
+  it('envia foto, troca a capa e apaga', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    simularSessao(PARCEIRA)
+    renderizarEm('/parceiro')
+    const entrada = (await screen.findByText('Adicionar foto')).closest('section')!.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement
+    const jpeg = () => new File(['jpeg'], 'foto.jpg', { type: 'image/jpeg' })
+
+    fireEvent.change(entrada, { target: { files: [jpeg()] } })
+    expect(await screen.findByText('Fotos (1 de 6)')).toBeInTheDocument()
+    fireEvent.change(entrada, { target: { files: [jpeg()] } })
+    expect(await screen.findByText('Fotos (2 de 6)')).toBeInTheDocument()
+    const [primeira, segunda] = pousada().photos.map((f) => f.id)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Usar a foto 2 como capa' }))
+    await screen.findByText('Capa trocada.')
+    expect(pousada().photos.map((f) => f.id)).toEqual([segunda, primeira])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar a foto 1' }))
+    expect(await screen.findByText('Fotos (1 de 6)')).toBeInTheDocument()
+    expect(pousada().photos.map((f) => f.id)).toEqual([primeira])
+    // O público vê as fotos do local (sem arquivo no mock: o substituto aparece).
+    expect((await clienteMock.local(pousada().id)).photos).toHaveLength(1)
+  })
+
+  it('formato não aceito mostra o erro e não envia', async () => {
+    simularSessao(PARCEIRA)
+    renderizarEm('/parceiro')
+    const entrada = (await screen.findByText('Adicionar foto')).closest('section')!.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement
+
+    fireEvent.change(entrada, { target: { files: [new File(['gif'], 'a.gif', { type: 'image/gif' })] } })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Use uma foto em JPG, PNG ou WebP.')
+    expect(pousada().photos).toHaveLength(0)
+  })
+
+  it('no limite de 6 fotos o botão trava', async () => {
+    pousada().photos = Array.from({ length: 6 }, (_, position) => ({
+      id: `foto-${position}`,
+      storage_key: `mock/${position}.jpg`,
+      position,
+    }))
+    simularSessao(PARCEIRA)
+    renderizarEm('/parceiro')
+
+    expect(await screen.findByRole('button', { name: 'Limite de 6 fotos' })).toBeDisabled()
+  })
+
   it('conta de parceiro sem estabelecimento explica o que fazer', async () => {
     simularSessao({
       id: '00000000-0000-4000-c000-000000000010',

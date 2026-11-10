@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ErroApi } from './lib/api'
-import { clienteMock } from './lib/mock'
+import { bancoDoMock, clienteMock } from './lib/mock'
 import { renderizarEm, simularSessao } from './test/utils'
 
 describe('rotas públicas', () => {
@@ -265,6 +265,21 @@ describe('diretório', () => {
 })
 
 describe('detalhe do local', () => {
+  it('mostra a capa e as outras fotos, servidas pela API em /api/v1/media', async () => {
+    const praia = bancoDoMock().locais.find((l) => l.name === 'Praia do Cajueiro Torto')!
+    praia.photos = ['capa', 'segunda', 'terceira'].map((nome, position) => ({
+      id: `foto-${nome}`,
+      storage_key: `places/${praia.id}/${nome}.jpg`,
+      position,
+    }))
+    renderizarEm(`/local/${praia.id}`)
+
+    const capa = await screen.findByRole('img', { name: 'Foto de Praia do Cajueiro Torto' })
+    expect(capa).toHaveAttribute('src', `/api/v1/media/places/${praia.id}/capa.jpg`)
+    const mais = screen.getByRole('list', { name: 'Mais fotos' })
+    expect(within(mais).getAllByRole('img')).toHaveLength(2)
+  })
+
   it('/local/:id mostra o nome e os dados comerciais vindos do mock', async () => {
     const locais = await clienteMock.locais()
     const restaurante = locais.find((l) => l.name === 'Restaurante Vento Sul')!

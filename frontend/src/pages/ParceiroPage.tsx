@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { AreaDeTexto, Selecao } from '../admin/campos'
 import { FalhaCarga } from '../components/FalhaCarga'
+import { GerenciarFotos } from '../components/GerenciarFotos'
 import { Botao } from '../components/ui/Botao'
 import { Campo } from '../components/ui/Campo'
 import { Card } from '../components/ui/Card'
@@ -18,9 +19,12 @@ import {
   textosDosHorarios,
   type TextosDosHorarios,
 } from '../lib/horarios'
+import { clienteDeFotos } from '../lib/fotos'
 import { parceiro } from '../lib/parceiro'
 import type { Categoria, Local, NegocioDoParceiroEntrada } from '../lib/tipos'
 import { useCarregar } from '../lib/useCarregar'
+
+const fotosDoParceiro = clienteDeFotos('partner')
 
 /** Painel do parceiro (protótipo 09): o dono edita o próprio estabelecimento. */
 export function ParceiroPage() {
@@ -324,16 +328,20 @@ function Editor({ inicial, categoria }: { inicial: Local; categoria: Categoria |
               )}
             </dd>
           </div>
-          <div>
-            <dt>
-              <Rotulo>Fotos</Rotulo>
-            </dt>
-            <dd>{local.photos.length === 1 ? '1 foto' : `${local.photos.length} fotos`}</dd>
-          </div>
         </dl>
         <p className="campo__dica">
           Para mudar o nome, a categoria ou a posição no mapa, fale com a equipe do Algodoal Digital.
         </p>
+      </Card>
+
+      <Card className="parceiro__fotos">
+        <GerenciarFotos
+          localId={local.id}
+          nome={local.name}
+          fotos={local.photos}
+          cliente={fotosDoParceiro}
+          aoMudar={(photos) => setLocal((atual) => ({ ...atual, photos }))}
+        />
       </Card>
 
       <form className="formulario parceiro__formulario" noValidate onSubmit={enviar}>

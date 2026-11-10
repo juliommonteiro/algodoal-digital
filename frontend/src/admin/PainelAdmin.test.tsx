@@ -354,6 +354,27 @@ describe('formulário do local', () => {
     )
   })
 
+  it('fotos aparecem só na edição de um local que já existe', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/locais/novo')
+    await screen.findByLabelText('Nome')
+    expect(screen.queryByText('Adicionar foto')).not.toBeInTheDocument()
+  })
+
+  it('admin envia foto de qualquer local, mesmo sem dono', async () => {
+    const alvo = localPorNome('Praia do Sol Deitado')
+    simularSessao(ADMIN)
+    renderizarEm(`/admin/locais/${alvo.id}`)
+    const entrada = (await screen.findByText('Adicionar foto')).closest('section')!.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement
+
+    fireEvent.change(entrada, { target: { files: [new File(['x'], 'p.jpg', { type: 'image/jpeg' })] } })
+
+    expect(await screen.findByText('Fotos (1 de 6)')).toBeInTheDocument()
+    expect(alvo.photos).toHaveLength(1)
+  })
+
   it('local inexistente mostra "Local não encontrado"', async () => {
     simularSessao(ADMIN)
     renderizarEm('/admin/locais/00000000-0000-4000-b000-999999999999')

@@ -843,3 +843,84 @@
 .parceiro__horarios legend {
   padding: 0 var(--e-1);
 }
+
+/* ------------------------------------------------------------------------------------------
+   Fotos (#29): gerenciar no painel admin e no do parceiro; mais fotos no detalhe do local.
+   ------------------------------------------------------------------------------------------ */
+.fotos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+}
+.fotos__aviso {
+  margin: 0;
+  padding: var(--e-3);
+  border-left: 4px solid var(--verde);
+  border-radius: 4px;
+  background: var(--fundo);
+}
+.fotos__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--e-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fotos__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+.fotos__item img,
+.fotos__vazia {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--fundo);
+}
+.fotos__vazia {
+  display: grid;
+  place-items: center;
+  color: var(--suave);
+}
+.fotos__capa {
+  position: absolute;
+  top: var(--e-2);
+  left: var(--e-2);
+  padding: 2px var(--e-2);
+  border-radius: 999px;
+  background: var(--verde);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.fotos__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--e-2);
+}
+.fotos__acoes .carroca__link {
+  min-height: 36px;
+  padding: 0;
+  font-size: 14px;
+}
+.parceiro__fotos {
+  padding: var(--e-4);
+}
+.detalhe__fotos {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 70%;
+  gap: var(--e-3);
+  margin: var(--e-3) 0 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+}
+.detalhe__fotos li {
+  scroll-snap-align: start;
+}
