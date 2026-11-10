@@ -113,17 +113,29 @@ export class CatalogoRepository {
       this.database.locais,
       this.database.metadadosSync,
       async () => {
-        await this.database.categorias.clear()
-        if (categorias.length) {
-          await this.database.categorias.bulkPut(
-            categorias.map((data, ordem) => ({ id: data.id, ordem, data })),
-          )
+        // Sync sem mudança (o caso comum, a cada volta à aba) não escreve em categorias nem em
+        // locais: escrever dispararia o liveQuery e redesenharia o mapa à toa.
+        const atuais = (await this.database.categorias.orderBy('ordem').toArray()).map((c) => c.data)
+        if (JSON.stringify(atuais) !== JSON.stringify(categorias)) {
+          await this.database.categorias.clear()
+          if (categorias.length) {
+            await this.database.categorias.bulkPut(
+              categorias.map((data, ordem) => ({ id: data.id, ordem, data })),
+            )
+          }
         }
-        if (removidos.length) await this.database.locais.bulkDelete(removidos)
-        if (alterados.length) await this.database.locais.bulkPut(alterados.map((l) => paraLinha(l, 0)))
-        // A lista do mapa sai por `ordem`: renumera por nome, como a API manda o inteiro.
-        const todos = (await this.database.locais.toArray()).sort(porNome)
-        await this.database.locais.bulkPut(todos.map((linha, ordem) => ({ ...linha, ordem })))
+        if (removidos.length || alterados.length) {
+          if (removidos.length) await this.database.locais.bulkDelete(removidos)
+          if (alterados.length) {
+            await this.database.locais.bulkPut(alterados.map((l) => paraLinha(l, 0)))
+          }
+          // A lista do mapa sai por `ordem`: renumera por nome, como a API manda o inteiro.
+          const todos = (await this.database.locais.toArray()).sort(porNome)
+          const mudaram = todos
+            .map((linha, ordem) => ({ ...linha, ordem }))
+            .filter((linha, i) => linha.ordem !== todos[i].ordem || alterados.some((l) => l.id === linha.id))
+          if (mudaram.length) await this.database.locais.bulkPut(mudaram)
+        }
         await this.guardarMetadados(sincronizadoEm, cursor)
       },
     )

@@ -113,3 +113,24 @@ describe('CatalogSyncService', () => {
     expect(await repository.cursor()).toBe('cursor')
   })
 })
+
+describe('aplicarMudancas', () => {
+  it('sync sem mudança não escreve nos locais nem nas categorias (o mapa não redesenha)', async () => {
+    const repository = new CatalogoRepository(db)
+    await repository.substituirSnapshot(categorias, [local('a', 'Praia A')], 'x', 'c1')
+    const escritas = vi.fn()
+    db.locais.hook('updating', escritas)
+    db.locais.hook('creating', escritas)
+    db.categorias.hook('creating', escritas)
+    db.categorias.hook('deleting', escritas)
+
+    await repository.aplicarMudancas(categorias, [], [], 'y', 'c2')
+
+    expect(escritas).not.toHaveBeenCalled()
+    expect(await repository.cursor()).toBe('c2')
+    db.locais.hook('updating').unsubscribe(escritas)
+    db.locais.hook('creating').unsubscribe(escritas)
+    db.categorias.hook('creating').unsubscribe(escritas)
+    db.categorias.hook('deleting').unsubscribe(escritas)
+  })
+})

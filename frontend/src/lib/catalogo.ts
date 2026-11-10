@@ -51,8 +51,11 @@ export function useCatalogo() {
       .sincronizar()
       .then(async () => {
         if (!ativo) return
+        // Com conteúdo, quem atualiza a tela é o liveQuery acima. Pôr o mesmo catálogo no
+        // estado de novo redesenharia o mapa (marcadores recriados) sem nada ter mudado.
+        // Aqui só o catálogo vazio, que o liveQuery ignora.
         const dados = await catalogoRepository.obterSnapshot()
-        if (ativo) setEstado({ status: 'ok', dados })
+        if (ativo && !temConteudo(dados)) setEstado({ status: 'ok', dados })
       })
       .catch(async (erro) => {
         if (!ativo) return
