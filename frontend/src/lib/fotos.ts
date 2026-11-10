@@ -75,6 +75,8 @@ function clienteMock(painel: Painel): ClienteFotos {
     }
     return { local }
   }
+  // Como os triggers da API (#28): mexer nas fotos marca o local como alterado.
+  const tocar = (local: { updated_at: string }) => (local.updated_at = new Date().toISOString())
   const ordenadas = (fotos: Foto[]) =>
     fotos.sort((a, b) => a.position - b.position).map((f, position) => Object.assign(f, { position }))
 
@@ -95,6 +97,7 @@ function clienteMock(painel: Painel): ClienteFotos {
         storage_key: `mock/${crypto.randomUUID()}.jpg`,
         position: local.photos.length,
       })
+      tocar(local)
       return responder(ordenadas(local.photos))
     },
 
@@ -103,6 +106,7 @@ function clienteMock(painel: Painel): ClienteFotos {
       if (erro) return erro
       if (!local.photos.some((f) => f.id === fotoId)) return falhar(404, 'Foto não encontrada.')
       local.photos = local.photos.filter((f) => f.id !== fotoId)
+      tocar(local)
       return responder(ordenadas(local.photos))
     },
 
@@ -112,6 +116,7 @@ function clienteMock(painel: Painel): ClienteFotos {
       const foto = local.photos.find((f) => f.id === fotoId)
       if (!foto) return falhar(404, 'Foto não encontrada.')
       foto.position = -1
+      tocar(local)
       return responder(ordenadas(local.photos))
     },
   }

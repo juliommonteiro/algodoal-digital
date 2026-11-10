@@ -1,4 +1,5 @@
 import type {
+  CatalogoSync,
   Categoria,
   ClienteApi,
   FiltrosLocais,
@@ -232,6 +233,11 @@ export const clienteHttp: ClienteApi = {
     requisitar<RespostaLogin>('POST', '/auth/refresh', { refresh_token: refreshToken }),
   eu: () => requisitar<Usuario>('GET', '/auth/me'),
   categorias: () => requisitar<Categoria[]>('GET', '/categories'),
+  catalogo: (since) =>
+    requisitar<CatalogoSync>(
+      'GET',
+      `/sync/catalog${since ? `?since=${encodeURIComponent(since)}` : ''}`,
+    ),
   locais: (filtros) => requisitar<Local[]>('GET', `/places${consulta(filtros)}`),
   local: (id) => requisitar<Local>('GET', `/places/${encodeURIComponent(id)}`),
 }

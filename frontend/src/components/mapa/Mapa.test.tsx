@@ -95,7 +95,7 @@ describe('mapa', () => {
   })
 
   it('os chips filtram os marcadores no cliente, sem chamar a API de novo', async () => {
-    const chamadas = vi.spyOn(clienteMock, 'locais')
+    const chamadas = vi.spyOn(clienteMock, 'catalogo')
     await abrirMapa()
     const grupo = screen.getByRole('radiogroup', { name: 'Filtrar por categoria' })
 
