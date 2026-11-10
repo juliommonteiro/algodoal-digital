@@ -138,6 +138,10 @@
 
 /* ---------- Tabela ---------- */
 .admin-tabela__rolagem {
+  /* relative: o texto só para leitor de tela (.so-leitor, position: absolute) do cabeçalho
+     "Ações" fica preso aqui dentro. Sem isso ele escapa da rolagem e alarga a página no
+     celular até a posição da última coluna. */
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--borda);
   border-radius: 12px;
@@ -299,6 +303,14 @@
   color: var(--tinta-2);
 }
 
+/* Filtros com 3 e 2 campos (usuários, carroceiros). Antes do @media abaixo, que os empilha. */
+.admin-filtros--tres {
+  grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(9rem, 1fr));
+}
+.admin-filtros--dois {
+  grid-template-columns: minmax(14rem, 2fr) minmax(9rem, 1fr);
+}
+
 /* ---------- Tela estreita: não quebra, só se rearruma ---------- */
 @media (max-width: 52rem) {
   .admin {
@@ -313,8 +325,9 @@
   }
   .admin__menu {
     flex-direction: row;
-    overflow-x: auto;
-    scrollbar-width: none;
+    /* Quebra em linhas em vez de rolar de lado: no celular ninguém percebe a rolagem, e a
+       última seção ("Carroceiros") ficava escondida. */
+    flex-wrap: wrap;
   }
   .admin__item {
     white-space: nowrap;
@@ -331,7 +344,9 @@
     border: 0;
     border-radius: 0;
   }
-  .admin-filtros {
+  .admin-filtros,
+  .admin-filtros--tres,
+  .admin-filtros--dois {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
   .admin-filtros__busca {
@@ -416,12 +431,6 @@
 }
 
 /* ---------- Usuários e carroceiros ---------- */
-.admin-filtros--tres {
-  grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(9rem, 1fr));
-}
-.admin-filtros--dois {
-  grid-template-columns: minmax(14rem, 2fr) minmax(9rem, 1fr);
-}
 .admin-tabela__sub {
   display: block;
   color: var(--suave);

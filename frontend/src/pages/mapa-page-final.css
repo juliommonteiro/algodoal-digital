@@ -8,8 +8,19 @@
   --mapa-border: rgba(16, 47, 49, 0.13);
   --mapa-shadow: 0 22px 70px rgba(18, 55, 59, 0.1);
   display: grid;
+  /* minmax(0, 1fr), e não a coluna automática: sem isso a coluna cresce até a largura mínima
+     do filho mais largo (a fileira de chips de categoria, ~740 px), e no celular a página toda
+     fica mais larga que a tela, que o navegador encolhe para caber. Assim os chips rolam de
+     lado dentro da tela, como no Diretório. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.15rem;
   min-width: 0;
+}
+
+/* Mesma largura das outras telas no desktop (ui-refresh.css, .page:not(.page--mapa)). O
+   .page de telas.css limita a 40rem, e o mapa ficava espremido numa coluna de 640 px. */
+.page.mapa-final {
+  max-width: var(--ad-content);
 }
 
 .mapa-final__cabecalho {
