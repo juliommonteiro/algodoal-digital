@@ -316,6 +316,8 @@ interface BancoDoMock {
   pedidos: PedidoDoMock[]
   /** `${pedido}:${usuario}` de quem recusou. */
   recusas: Set<string>
+  /** Ids das contas desativadas pelo admin: não entram nem renovam. */
+  desativados: Set<string>
 }
 
 let dados: BancoDoMock | null = null
@@ -330,6 +332,7 @@ function banco(): BancoDoMock {
       carroceiros: montarCarroceiros(),
       pedidos: [],
       recusas: new Set(),
+      desativados: new Set(),
     }
   }
   return dados
@@ -483,15 +486,19 @@ export const clienteMock: ClienteApi = {
 
   entrar(email, senha) {
     const usuario = buscarPorEmail(email)
-    if (!usuario || senha.length < SENHA_MINIMA) {
+    if (!usuario || senha.length < SENHA_MINIMA || banco().desativados.has(usuario.id)) {
       return falhar(401, 'E-mail ou senha incorretos.')
     }
     return responder(sessao(usuario))
   },
 
   renovar(refreshToken) {
-    const usuario = decodificar(refreshToken, 'mock-refresh.')
-    if (!usuario) return falhar(401, 'Sessão expirada. Entre de novo.')
+    const salvo = decodificar(refreshToken, 'mock-refresh.')
+    // Como a API: o perfil vem da conta atual (o admin pode ter mudado), não do token.
+    const usuario = salvo ? (buscarPorEmail(salvo.email) ?? salvo) : null
+    if (!usuario || banco().desativados.has(usuario.id)) {
+      return falhar(401, 'Sessão expirada. Entre de novo.')
+    }
     return responder(sessao(usuario))
   },
 

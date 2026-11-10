@@ -38,6 +38,10 @@ class CarroceiroIndisponivel(Exception):
     pass
 
 
+class CarroceiroSuspenso(Exception):
+    """Suspenso pelo admin: não recebe nem aceita pedidos."""
+
+
 class CapacidadeInsuficiente(Exception):
     pass
 
@@ -142,6 +146,8 @@ def atualizar_perfil(db: Session, carroceiro: Carrier, dados: PerfilCarroceiroUp
         valor = getattr(dados, campo)
         if campo in dados.model_fields_set and valor is not None:
             setattr(carroceiro, campo, valor)
+    if not carroceiro.is_approved:
+        carroceiro.is_available = False  # suspenso não fica disponível nem se ligar
     db.commit()
     db.refresh(carroceiro)
     return carroceiro
@@ -155,10 +161,10 @@ def _recusado_por(carroceiro: Carrier):
 
 def pedidos_abertos(db: Session, carroceiro: Carrier) -> list[RideRequest]:
     """Pendentes que cabem na carroça, menos os recusados e os do próprio carroceiro. Quem está
-    indisponível não recebe nada."""
+    indisponível ou suspenso não recebe nada."""
     expirar_vencidos(db)
     db.commit()
-    if not carroceiro.is_available:
+    if not carroceiro.is_available or not carroceiro.is_approved:
         return []
     return list(
         db.scalars(
@@ -178,6 +184,9 @@ def aceitar(db: Session, carroceiro: Carrier, pedido_id: uuid.UUID) -> RideReque
     """O primeiro que aceitar leva: o UPDATE só pega o pedido se ele ainda estiver pendente.
     No PostgreSQL, o segundo UPDATE concorrente espera o primeiro e não encontra mais a linha."""
     expirar_vencidos(db)
+    if not carroceiro.is_approved:
+        db.commit()
+        raise CarroceiroSuspenso
     if not carroceiro.is_available:
         db.commit()
         raise CarroceiroIndisponivel

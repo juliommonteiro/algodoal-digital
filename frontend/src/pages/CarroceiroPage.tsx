@@ -128,6 +128,11 @@ export function CarroceiroPage() {
             </Botao>
           }
         />
+      ) : !estado.perfil.is_approved ? (
+        <EstadoVazio
+          titulo={estado.perfil.display_name}
+          frase="Seu perfil de carroceiro está suspenso: você não recebe nem aceita pedidos. Fale com a equipe do Algodoal Digital."
+        />
       ) : (
         <>
           <Card className="carroceiro__perfil">

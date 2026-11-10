@@ -27,6 +27,7 @@ _404 = {status.HTTP_404_NOT_FOUND: {"description": "Pedido não encontrado"}}
 _409 = {status.HTTP_409_CONFLICT: {"description": "Pedido não está mais disponível"}}
 
 NAO_ENCONTRADO = "Pedido não encontrado."
+SUSPENSO = "Seu perfil de carroceiro está suspenso. Fale com a equipe do Algodoal Digital."
 INDISPONIVEL = (
     "Este pedido não está mais disponível: outro carroceiro aceitou, ele venceu ou foi cancelado."
 )
@@ -177,6 +178,8 @@ def aceitar(pedido_id: uuid.UUID, usuario: Carroceiro, db: Db) -> PedidoParaCarr
         return _para_carroceiro(carroca.aceitar(db, carroceiro, pedido_id), carroceiro)
     except carroca.PedidoNaoEncontrado as exc:
         raise _erro(status.HTTP_404_NOT_FOUND, NAO_ENCONTRADO) from exc
+    except carroca.CarroceiroSuspenso as exc:
+        raise _erro(status.HTTP_409_CONFLICT, SUSPENSO) from exc
     except carroca.CarroceiroIndisponivel as exc:
         raise _erro(status.HTTP_409_CONFLICT, "Fique disponível para aceitar pedidos.") from exc
     except carroca.CapacidadeInsuficiente as exc:

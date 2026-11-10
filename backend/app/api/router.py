@@ -1,6 +1,16 @@
 from fastapi import APIRouter
 
-from app.api.routes import admin, auth, carroca, categories, health, parceiro, places, sync
+from app.api.routes import (
+    admin,
+    admin_contas,
+    auth,
+    carroca,
+    categories,
+    health,
+    parceiro,
+    places,
+    sync,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -12,6 +22,7 @@ api_router.include_router(places.router)
 api_router.include_router(sync.router)
 # Painel administrativo (S6): só perfil admin.
 api_router.include_router(admin.router)
+api_router.include_router(admin_contas.router)
 # Carroça (S10): pedido do turista (com sessão) e painel do carroceiro (só perfil carrier).
 api_router.include_router(carroca.pedidos)
 api_router.include_router(carroca.contatos)

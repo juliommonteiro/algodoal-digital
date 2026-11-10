@@ -1,10 +1,17 @@
 import { categoriasRaiz } from '../lib/categorias'
-import type { Categoria, StatusAdmin } from '../lib/tipos'
+import type { Categoria, Perfil, StatusAdmin } from '../lib/tipos'
 
 export const ROTULO_STATUS: Record<StatusAdmin, string> = {
   publicado: 'Publicado',
   rascunho: 'Rascunho',
   removido: 'Removido',
+}
+
+export const ROTULO_PERFIL: Record<Perfil, string> = {
+  tourist: 'Turista',
+  carrier: 'Carroceiro',
+  partner: 'Parceiro',
+  admin: 'Admin',
 }
 
 /**

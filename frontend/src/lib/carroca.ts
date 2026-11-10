@@ -193,23 +193,24 @@ const regrasDoMock: ClienteCarroca = {
   meuPerfil() {
     const { perfil, erro } = sessaoDeCarroceiro()
     if (erro) return erro
-    const { display_name, whatsapp, capacity, is_available } = perfil
-    return responder({ display_name, whatsapp, capacity, is_available })
+    const { display_name, whatsapp, capacity, is_available, is_approved } = perfil
+    return responder({ display_name, whatsapp, capacity, is_available, is_approved })
   },
 
   atualizarPerfil(mudancas) {
     const { perfil, erro } = sessaoDeCarroceiro()
     if (erro) return erro
     Object.assign(perfil, mudancas)
-    const { display_name, whatsapp, capacity, is_available } = perfil
-    return responder({ display_name, whatsapp, capacity, is_available })
+    if (!perfil.is_approved) perfil.is_available = false // suspenso não fica disponível
+    const { display_name, whatsapp, capacity, is_available, is_approved } = perfil
+    return responder({ display_name, whatsapp, capacity, is_available, is_approved })
   },
 
   pedidosAbertos() {
     const { usuario, perfil, erro } = sessaoDeCarroceiro()
     if (erro) return erro
     expirarVencidos()
-    if (!perfil.is_available) return responder([])
+    if (!perfil.is_available || !perfil.is_approved) return responder([])
     const { pedidos, recusas } = bancoDoMock()
     const abertos = pedidos.filter(
       (p) =>
@@ -225,6 +226,9 @@ const regrasDoMock: ClienteCarroca = {
     const { usuario, perfil, erro } = sessaoDeCarroceiro()
     if (erro) return erro
     expirarVencidos()
+    if (!perfil.is_approved) {
+      return falhar(409, 'Seu perfil de carroceiro está suspenso. Fale com a equipe do Algodoal Digital.')
+    }
     if (!perfil.is_available) return falhar(409, 'Fique disponível para aceitar pedidos.')
     const pedido = bancoDoMock().pedidos.find((p) => p.id === pedidoId)
     if (!pedido || pedido.tourist_id === usuario.id) return falhar(404, 'Pedido não encontrado.')

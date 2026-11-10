@@ -47,25 +47,19 @@ describe('acesso ao painel', () => {
     await screen.findByRole('heading', { name: 'Praia do Cajueiro Torto' })
   })
 
-  it('admin vê a barra lateral com as seções futuras desabilitadas e a semana', async () => {
+  it('admin vê as quatro seções na barra lateral, sem missões nem recompensas', async () => {
     await abrirLista()
 
     const lateral = screen.getByRole('complementary', { name: 'Seções do painel' })
-    expect(within(lateral).getByRole('link', { name: 'Locais' })).toHaveAttribute(
-      'href',
-      '/admin/locais',
-    )
-    for (const [secao, semana] of [
-      ['Carroceiros', 'S9'],
-      ['Missões', 'S10'],
-      ['Recompensas', 'S11'],
-      ['Usuários', 'a definir'],
-    ]) {
-      const item = within(lateral).getByText(secao)
-      expect(item).toHaveAttribute('aria-disabled', 'true')
-      expect(item).toHaveTextContent(semana)
-      expect(within(lateral).queryByRole('link', { name: new RegExp(secao) })).toBeNull()
-    }
+    const links = within(lateral).getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/admin/'))
+    expect(links.map((l) => [l.textContent, l.getAttribute('href')])).toEqual([
+      ['Indicadores', '/admin/indicadores'],
+      ['Locais', '/admin/locais'],
+      ['Usuários', '/admin/usuarios'],
+      ['Carroceiros', '/admin/carroceiros'],
+    ])
+    expect(within(lateral).queryByText('Missões')).not.toBeInTheDocument()
+    expect(within(lateral).queryByText('Recompensas')).not.toBeInTheDocument()
   })
 })
 
@@ -439,5 +433,122 @@ describe('indicadores', () => {
 
     const lateral = screen.getByRole('complementary', { name: 'Seções do painel' })
     expect(within(lateral).getByRole('link', { name: 'Locais' })).toHaveAttribute('aria-current', 'page')
+  })
+})
+
+describe('usuários', () => {
+  const linha = (nome: string) => screen.getByRole('rowheader', { name: new RegExp(nome) }).closest('tr') as HTMLElement
+
+  it('lista as contas, marca a própria e não deixa mexer nela', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/usuarios')
+
+    expect(await screen.findByRole('heading', { name: 'Usuários' })).toBeInTheDocument()
+    await screen.findByRole('table') // o título aparece antes da lista chegar
+    const minha = within(linha('Admin de Teste'))
+    expect(minha.getByText('você')).toBeInTheDocument()
+    expect(minha.queryByRole('button')).not.toBeInTheDocument()
+    expect(within(linha('Bento Carroça')).getByText('Carroceiro')).toBeInTheDocument()
+  })
+
+  it('filtra por perfil e busca', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/usuarios?perfil=carrier')
+
+    await screen.findByRole('table')
+    const nomes = screen.getAllByRole('rowheader').map((c) => c.querySelector('.admin-tabela__nome')?.textContent)
+    expect(nomes).toEqual(['Bento Carroça', 'Carroceiro de Teste', 'Rosa Condutora', 'Tião Boiadeiro'])
+    fireEvent.change(screen.getByLabelText('Buscar por nome ou e-mail'), { target: { value: 'rosa' } })
+    expect(screen.getAllByRole('rowheader')).toHaveLength(1)
+  })
+
+  it('desativar pede confirmação e a conta não entra mais', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    simularSessao(ADMIN)
+    renderizarEm('/admin/usuarios')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Desativar Turista de Teste' }))
+
+    expect(await screen.findByText('A conta de "Turista de Teste" foi desativada.')).toBeInTheDocument()
+    expect(within(linha('Turista de Teste')).getByText('Desativada')).toBeInTheDocument()
+    await expect(clienteMock.entrar('turista@example.com', 'algodoal-teste')).rejects.toMatchObject({ status: 401 })
+    fireEvent.click(screen.getByRole('button', { name: 'Reativar Turista de Teste' }))
+    expect(await screen.findByText('A conta de "Turista de Teste" foi reativada.')).toBeInTheDocument()
+  })
+
+  it('tornar admin só aparece para turista e admin', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    simularSessao(ADMIN)
+    renderizarEm('/admin/usuarios')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Tornar Turista de Teste admin' }))
+
+    expect(await screen.findByText('"Turista de Teste" agora é admin.')).toBeInTheDocument()
+    expect(within(linha('Bento Carroça')).queryByRole('button', { name: /admin/ })).not.toBeInTheDocument()
+    expect(within(linha('Célia Parceira')).queryByRole('button', { name: /admin/ })).not.toBeInTheDocument()
+  })
+
+  it('sem confirmação não muda nada', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const atualizar = vi.spyOn(clienteAdminMock, 'atualizarUsuario')
+    simularSessao(ADMIN)
+    renderizarEm('/admin/usuarios')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Desativar Turista de Teste' }))
+
+    expect(atualizar).not.toHaveBeenCalled()
+  })
+})
+
+describe('carroceiros', () => {
+  const linha = (nome: string) => screen.getByRole('rowheader', { name: new RegExp(nome) }).closest('tr') as HTMLElement
+
+  it('lista com contato, capacidade e situação', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/carroceiros')
+
+    expect(await screen.findByRole('heading', { name: 'Carroceiros' })).toBeInTheDocument()
+    await screen.findByRole('table') // o título aparece antes da lista chegar
+    const bento = within(linha('Carroça do Bento'))
+    expect(bento.getByRole('link', { name: '(91) 95555-0202' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^https:\/\/wa\.me\/5591955550202/),
+    )
+    expect(bento.getByText('4 pessoas')).toBeInTheDocument()
+    expect(within(linha('Carroça do Tião')).getByText('Suspenso')).toBeInTheDocument()
+  })
+
+  it('suspender tira dos pedidos e reativar devolve', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    simularSessao(ADMIN)
+    renderizarEm('/admin/carroceiros')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Suspender Carroça do Bento' }))
+
+    expect(await screen.findByText('"Carroça do Bento" foi suspenso.')).toBeInTheDocument()
+    const perfil = bancoDoMock().carroceiros.find((c) => c.display_name === 'Carroça do Bento')!
+    expect(perfil.is_approved).toBe(false)
+    expect(perfil.is_available).toBe(false) // suspenso sai também dos disponíveis
+    fireEvent.click(screen.getByRole('button', { name: 'Reativar Carroça do Bento' }))
+    expect(await screen.findByText('"Carroça do Bento" foi reativado.')).toBeInTheDocument()
+    expect(perfil.is_approved).toBe(true)
+  })
+
+  it('editar valida no cliente e salva', async () => {
+    simularSessao(ADMIN)
+    renderizarEm('/admin/carroceiros')
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Carroça da Rosa' }))
+    const form = screen.getByRole('form', { name: 'Editar Carroça da Rosa' })
+
+    fireEvent.change(within(form).getByLabelText('WhatsApp'), { target: { value: '123' } })
+    fireEvent.click(within(form).getByRole('button', { name: 'Salvar' }))
+    expect(within(form).getByText(/com DDD/)).toBeInTheDocument()
+
+    fireEvent.change(within(form).getByLabelText('WhatsApp'), { target: { value: '(91) 98888-0005' } })
+    fireEvent.change(within(form).getByLabelText('Capacidade (pessoas)'), { target: { value: '3' } })
+    fireEvent.click(within(form).getByRole('button', { name: 'Salvar' }))
+
+    expect(await screen.findByText('"Carroça da Rosa" foi salvo.')).toBeInTheDocument()
+    expect(within(linha('Carroça da Rosa')).getByText('3 pessoas')).toBeInTheDocument()
   })
 })

@@ -1,16 +1,18 @@
 import { Link, Navigate, useParams } from 'react-router'
 import { useAuth } from '../auth/contexto'
+import { Carroceiros } from './Carroceiros'
 import { FormularioDoLocal } from './FormularioDoLocal'
 import { Indicadores } from './Indicadores'
 import { ListaDeLocais } from './ListaDeLocais'
+import { Usuarios } from './Usuarios'
 import './admin.css'
 
-/** Seções que ainda não existem; a semana vem do docs/backlog.md. */
-const EM_BREVE: [secao: string, quando: string][] = [
-  ['Usuários', 'a definir'], // ainda sem item no backlog
-  ['Carroceiros', 'S9'],
-  ['Missões', 'S10'],
-  ['Recompensas', 'S11'],
+/** Seções do painel, na ordem da barra lateral. Missões e recompensas entram com o passaporte. */
+const SECOES: [caminho: string, rotulo: string][] = [
+  ['indicadores', 'Indicadores'],
+  ['locais', 'Locais'],
+  ['usuarios', 'Usuários'],
+  ['carroceiros', 'Carroceiros'],
 ]
 
 /**
@@ -25,6 +27,8 @@ function useSecao(): string[] {
 function Tela() {
   const partes = useSecao()
   if (partes.length === 1 && partes[0] === 'indicadores') return <Indicadores />
+  if (partes.length === 1 && partes[0] === 'usuarios') return <Usuarios />
+  if (partes.length === 1 && partes[0] === 'carroceiros') return <Carroceiros />
   if (partes.length === 0 || (partes.length === 1 && partes[0] === 'locais')) {
     return <ListaDeLocais />
   }
@@ -51,31 +55,16 @@ export default function PainelAdmin() {
         <p className="admin__marca">Painel</p>
         <nav>
           <ul className="admin__menu">
-            <li>
-              <Link
-                to="/admin/indicadores"
-                className={classe('indicadores')}
-                aria-current={secao === 'indicadores' ? 'page' : undefined}
-              >
-                Indicadores
-              </Link>
-            </li>
-            <li>
-              {/* Link, e não NavLink: o NavLink tiraria o aria-current em /admin, que também é Locais. */}
-              <Link
-                to="/admin/locais"
-                className={classe('locais')}
-                aria-current={secao === 'locais' ? 'page' : undefined}
-              >
-                Locais
-              </Link>
-            </li>
-            {EM_BREVE.map(([secao, quando]) => (
-              <li key={secao}>
-                <span className="admin__item admin__item--off" aria-disabled="true">
-                  {secao}
-                  <span className="admin__quando">{quando}</span>
-                </span>
+            {/* Link, e não NavLink: o NavLink tiraria o aria-current em /admin, que também é Locais. */}
+            {SECOES.map(([caminho, rotulo]) => (
+              <li key={caminho}>
+                <Link
+                  to={`/admin/${caminho}`}
+                  className={classe(caminho)}
+                  aria-current={secao === caminho ? 'page' : undefined}
+                >
+                  {rotulo}
+                </Link>
               </li>
             ))}
           </ul>

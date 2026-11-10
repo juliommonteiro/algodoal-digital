@@ -6,11 +6,20 @@ import { requisitar } from '../lib/api'
 import { idsDaArvore } from '../lib/categorias'
 import { erroDeLatitude, erroDeLongitude } from '../lib/areaDoMapa'
 import { usandoMock } from '../lib/cliente'
-import { bancoDoMock, contaDoMock, falhar, responder } from '../lib/mock'
+import { erroWhatsApp } from '../lib/validacao'
+import {
+  bancoDoMock,
+  contaDoMock,
+  falhar,
+  responder,
+  usuarioDaSessaoMock,
+  type CarroceiroDoMock,
+} from '../lib/mock'
 import type {
   Categoria,
   ClienteAdmin,
   FiltrosAdmin,
+  CarroceiroAdmin,
   Indicadores,
   LocalAdmin,
   LocalEntrada,
@@ -18,6 +27,7 @@ import type {
   NegocioEntrada,
   StatusAdmin,
   Usuario,
+  UsuarioAdmin,
 } from '../lib/tipos'
 
 const id = encodeURIComponent
@@ -61,8 +71,23 @@ async function eEsquecer(pedido: Promise<LocalAdmin>): Promise<LocalAdmin> {
   return local
 }
 
+function parametros(filtros: Record<string, string | undefined> = {}): string {
+  const params = new URLSearchParams()
+  for (const [chave, valor] of Object.entries(filtros)) if (valor) params.set(chave, valor)
+  const texto = params.toString()
+  return texto ? `?${texto}` : ''
+}
+
 export const clienteAdminHttp: ClienteAdmin = {
   indicadores: () => requisitar<Indicadores>('GET', '/admin/indicators'),
+  usuarios: (filtros) =>
+    requisitar<UsuarioAdmin[]>('GET', `/admin/users${parametros({ ...filtros })}`),
+  atualizarUsuario: (usuarioId, mudancas) =>
+    requisitar<UsuarioAdmin>('PATCH', `/admin/users/${id(usuarioId)}`, mudancas),
+  carroceiros: (filtros) =>
+    requisitar<CarroceiroAdmin[]>('GET', `/admin/carriers${parametros({ ...filtros })}`),
+  atualizarCarroceiro: (carroceiroId, mudancas) =>
+    requisitar<CarroceiroAdmin>('PATCH', `/admin/carriers/${id(carroceiroId)}`, mudancas),
   locais: (filtros) => requisitar<LocalAdmin[]>('GET', `/admin/places${consulta(filtros)}`),
   local: (localId) => requisitar<LocalAdmin>('GET', `/admin/places/${id(localId)}`),
   criar: (dados) => eEsquecer(requisitar<LocalAdmin>('POST', '/admin/places', dados)),
@@ -150,7 +175,107 @@ function negocioComDono(negocio: NegocioEntrada | null): NegocioAdmin | null {
   return { ...negocio, owner_email }
 }
 
+// Usuários e carroceiros no mock: mesmas travas da API (services/admin_contas.py).
+const CRIADO_EM = '2026-09-22T18:30:00Z'
+
+function contem(texto: string | null | undefined, termo: string): boolean {
+  return (texto ?? '').toLowerCase().includes(termo)
+}
+
+function usuarioAdmin(u: Usuario): UsuarioAdmin {
+  const banco = bancoDoMock()
+  return {
+    ...u,
+    is_active: !banco.desativados.has(u.id),
+    created_at: CRIADO_EM,
+    estabelecimentos: banco.locais.filter(
+      (l) => (l.business as { owner_email?: string | null } | null)?.owner_email === u.email,
+    ).length,
+    tem_perfil_de_carroceiro: banco.carroceiros.some((c) => c.user_id === u.id),
+  }
+}
+
+function carroceiroAdmin(c: CarroceiroDoMock): CarroceiroAdmin {
+  const banco = bancoDoMock()
+  const semana = Date.now() - 7 * 86_400_000
+  return {
+    id: c.user_id, // o mock não tem id próprio de carroceiro: usa o do usuário
+    user_id: c.user_id,
+    display_name: c.display_name,
+    email: banco.usuarios.find((u) => u.id === c.user_id)?.email ?? '',
+    whatsapp: c.whatsapp,
+    capacity: c.capacity,
+    is_available: c.is_available,
+    is_approved: c.is_approved,
+    conta_ativa: !banco.desativados.has(c.user_id),
+    viagens_7_dias: banco.pedidos.filter(
+      (p) =>
+        p.carrier_user_id === c.user_id &&
+        p.status === 'accepted' &&
+        Date.parse(p.created_at) >= semana,
+    ).length,
+    created_at: CRIADO_EM,
+  }
+}
+
+const PERFIL_DO_CADASTRO: Partial<Record<Usuario['role'], string>> = {
+  carrier: 'O perfil de carroceiro vem do cadastro de carroceiro (suspenda em Carroceiros), não se troca aqui.',
+  partner: 'O perfil de parceiro vem do e-mail do dono no estabelecimento (mude em Locais), não se troca aqui.',
+}
+
 export const clienteAdminMock: ClienteAdmin = {
+  usuarios(filtros) {
+    const termo = filtros?.q?.trim().toLowerCase() ?? ''
+    const lista = bancoDoMock()
+      .usuarios.map(usuarioAdmin)
+      .filter((u) => !filtros?.perfil || u.role === filtros.perfil)
+      .filter((u) => !filtros?.status || u.is_active === (filtros.status === 'ativa'))
+      .filter((u) => !termo || contem(u.name, termo) || contem(u.email, termo))
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    return responder(lista)
+  },
+
+  atualizarUsuario(usuarioId, mudancas) {
+    const banco = bancoDoMock()
+    const alvo = banco.usuarios.find((u) => u.id === usuarioId)
+    if (!alvo) return falhar(404, 'Usuário não encontrado.')
+    if (usuarioDaSessaoMock()?.id === alvo.id) {
+      return falhar(409, 'Você não pode mudar a própria conta por aqui: peça a outro admin.')
+    }
+    if (mudancas.role && mudancas.role !== alvo.role && PERFIL_DO_CADASTRO[alvo.role]) {
+      return falhar(409, PERFIL_DO_CADASTRO[alvo.role]!)
+    }
+    if (mudancas.role) alvo.role = mudancas.role
+    if (mudancas.is_active === false) banco.desativados.add(alvo.id)
+    if (mudancas.is_active === true) banco.desativados.delete(alvo.id)
+    return responder(usuarioAdmin(alvo))
+  },
+
+  carroceiros(filtros) {
+    const termo = filtros?.q?.trim().toLowerCase() ?? ''
+    const lista = bancoDoMock()
+      .carroceiros.map(carroceiroAdmin)
+      .filter((c) => !filtros?.status || c.is_approved === (filtros.status === 'aprovado'))
+      .filter(
+        (c) =>
+          !termo || contem(c.display_name, termo) || contem(c.email, termo) || contem(c.whatsapp, termo),
+      )
+      .sort((a, b) => a.display_name.localeCompare(b.display_name, 'pt-BR'))
+    return responder(lista)
+  },
+
+  atualizarCarroceiro(carroceiroId, mudancas) {
+    const perfil = bancoDoMock().carroceiros.find((c) => c.user_id === carroceiroId)
+    if (!perfil) return falhar(404, 'Carroceiro não encontrado.')
+    if (mudancas.whatsapp !== undefined) {
+      const erro = erroWhatsApp(mudancas.whatsapp)
+      if (erro) return falhar(422, erro, { whatsapp: erro })
+    }
+    Object.assign(perfil, mudancas)
+    if (mudancas.is_approved === false) perfil.is_available = false
+    return responder(carroceiroAdmin(perfil))
+  },
+
   // Mesmas contas da API (services/indicadores.py), sobre o "banco" do mock.
   indicadores() {
     const { usuarios, locais, carroceiros, pedidos } = bancoDoMock()
