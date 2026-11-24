@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import UsuarioAtual
-from app.core.limites import LIMITE_LOGIN, LIMITE_REGISTRO, limiter
+from app.core.limites import limite_login, limite_registro, limiter
 from app.db.session import get_db
 from app.schemas.auth import LoginIn, RefreshIn, RegistroIn, RespostaLogin, UsuarioRead
 from app.services import auth
@@ -43,7 +43,7 @@ def _nao_autenticado(detalhe: str) -> HTTPException:
     summary="Cria conta (turista, ou carroceiro com `carrier`) e já entra",
     responses={status.HTTP_409_CONFLICT: {"description": "E-mail já cadastrado"}, **_429},
 )
-@limiter.limit(LIMITE_REGISTRO)
+@limiter.limit(limite_registro)
 def registrar(
     request: Request, dados: RegistroIn, db: Annotated[Session, Depends(get_db)]
 ) -> RespostaLogin:
@@ -63,7 +63,7 @@ def registrar(
 
 
 @router.post("/login", summary="Entra com e-mail e senha", responses={**_401, **_429})
-@limiter.limit(LIMITE_LOGIN)
+@limiter.limit(limite_login)
 def entrar(
     request: Request, dados: LoginIn, db: Annotated[Session, Depends(get_db)]
 ) -> RespostaLogin:

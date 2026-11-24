@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from app.api.router import api_router
 from app.core.config import get_settings
@@ -27,13 +28,21 @@ def _request_id(request: Request) -> str:
     return str(uuid.uuid4())
 
 
+def _ip_do_cliente(request: Request) -> str | None:
+    return request.client.host if request.client else None
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
+    # Em produção a documentação sai do ar (API_DOCS=true liga de novo): ela entrega o mapa de
+    # todas as rotas, inclusive as do admin.
+    docs = settings.docs_habilitados
     app = FastAPI(
         title=settings.project_name,
         version="0.1.0",
-        docs_url="/docs",
-        openapi_url=f"{settings.api_prefix}/openapi.json",
+        docs_url="/docs" if docs else None,
+        redoc_url="/redoc" if docs else None,
+        openapi_url=f"{settings.api_prefix}/openapi.json" if docs else None,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -58,6 +67,7 @@ def create_app() -> FastAPI:
                     {
                         "event": "http_request_failed",
                         "request_id": request_id,
+                        "client_ip": _ip_do_cliente(request),
                         "method": request.method,
                         "path": request.url.path,
                         "duration_ms": duracao_ms,
@@ -73,6 +83,7 @@ def create_app() -> FastAPI:
                 {
                     "event": "http_request_complete",
                     "request_id": request_id,
+                    "client_ip": _ip_do_cliente(request),
                     "method": request.method,
                     "path": request.url.path,
                     "status": response.status_code,
@@ -92,6 +103,13 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, ao_estourar_limite)
     app.include_router(api_router, prefix=settings.api_prefix)
+
+    # IP real atrás do Caddy (compose.prod.yml): só a conexão vinda de um endereço de
+    # TRUSTED_PROXIES tem o X-Forwarded-For (e o X-Forwarded-Proto) aceito. Adicionado por
+    # último para ficar por fora de todos: o rate limit, o CORS e o log acima já veem o IP do
+    # cliente. Vazio (desenvolvimento): este middleware não entra.
+    if settings.trusted_proxy_list:
+        app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.trusted_proxy_list)
     return app
 
 
