@@ -1,0 +1,11 @@
+# Contexto da imagem do Caddy: só o frontend e o Caddyfile. O node_modules do seu computador
+# (Windows) não pode entrar: tem binários de outra plataforma.
+**
+!frontend/
+!deploy/caddy/Caddyfile
+frontend/node_modules
+frontend/dist
+frontend/dev-dist
+frontend/.env
+frontend/.env.*
+frontend/coverage

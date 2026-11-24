@@ -23,3 +23,6 @@ dev-dist/
 .ferramentas/
 # Fotos enviadas pelos painéis (#29): ficam só neste computador
 backend/media/
+# Produção: segredos do servidor e cópias do banco (scripts/backup-db.sh)
+.env.prod
+backups/

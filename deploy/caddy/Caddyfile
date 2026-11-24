@@ -1,0 +1,56 @@
+# Produção (compose.prod.yml). O HTTPS é automático: o Caddy pede e renova o certificado do
+# DOMAIN no Let's Encrypt e guarda em /data (volume caddy_data). Com DOMAIN=localhost, ele usa
+# um certificado próprio, para testar no seu computador.
+{
+	# Só HTTP/1.1 e HTTP/2: o security group e o ufw abrem 443/tcp, não 443/udp (HTTP/3).
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# A API inteira vive em /api/v1, inclusive as fotos enviadas (/api/v1/media). Nada de /api
+	# cai no index.html: rota que a API não conhece volta o 404 dela, em JSON. O Caddy troca o
+	# X-Forwarded-For que o cliente mandar pelo IP real da conexão; a API só aceita esse
+	# cabeçalho vindo do IP fixo do Caddy (TRUSTED_PROXIES no compose.prod.yml).
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	root * /srv
+
+	# Nome com hash muda a cada build: um ano de cache. Sem fallback: um arquivo antigo que
+	# sumiu depois de um deploy dá 404, e não o index.html servido como se fosse JavaScript.
+	@comHash path /assets/* /workbox-*.js
+	handle @comHash {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# O resto revalida a cada acesso (no-cache usa o ETag, então volta 304 sem baixar de novo):
+	# index.html, sw.js, registerSW.js, manifest.webmanifest, ícones, fontes e o mapa, que não
+	# têm hash no nome. O sw.js principalmente: preso no cache, o app nunca se atualizaria.
+	# Rota do app (/local/..., /carroca, /admin) que não é arquivo cai no index.html.
+	handle {
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Erro do próprio Caddy (ex.: /assets/ que não existe): sem o cache de um ano do bloco acima.
+	handle_errors {
+		header {
+			Cache-Control "no-store"
+			-Server
+		}
+		respond "{err.status_code} {err.status_text}"
+	}
+}

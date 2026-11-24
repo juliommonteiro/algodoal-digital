@@ -2,3 +2,7 @@
 __pycache__
 .pytest_cache
 .ruff_cache
+# Fotos enviadas (#29): ficam no volume, nunca dentro da imagem
+media
+build
+*.egg-info
