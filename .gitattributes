@@ -1,0 +1,8 @@
+# Scripts e configs que rodam no Linux (EC2, containers) ficam com LF mesmo vindos do Windows:
+# com CRLF, o bash falha com "$'\r': command not found".
+*.sh text eol=lf
+Caddyfile text eol=lf
+*.yml text eol=lf
+Dockerfile text eol=lf
+*.dockerignore text eol=lf
+.env*.example text eol=lf

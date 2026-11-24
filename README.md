@@ -98,9 +98,11 @@ O CI roda tudo isso a cada push e em todo PR, incluindo `alembic upgrade head` n
 │       ├── components/
 │       ├── pages/
 │       └── lib/
-├── docs/             # arquitetura, modelo de dados, backlog
-├── scripts/          # setup do GitHub
-└── docker-compose.yml
+├── deploy/caddy/     # imagem de produção: PWA compilado + Caddy (HTTPS)
+├── docs/             # arquitetura, modelo de dados, backlog, deploy
+├── scripts/          # setup do GitHub, mapa, deploy na EC2
+├── docker-compose.yml  # desenvolvimento
+└── compose.prod.yml    # produção (docs/deploy-aws.md)
 ```
 
 ## Documentação
@@ -108,6 +110,8 @@ O CI roda tudo isso a cada push e em todo PR, incluindo `alembic upgrade head` n
 - [Arquitetura](docs/arquitetura.md)
 - [Modelo de dados](docs/modelo-dados.md)
 - [Backlog priorizado](docs/backlog.md)
+- [Deploy na AWS (demonstração)](docs/deploy-aws.md)
+- [Contas da apresentação](docs/demo.md)
 - [Como contribuir](CONTRIBUTING.md) — branches, commits e PRs
 
 ## Mapa

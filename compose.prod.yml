@@ -1,0 +1,122 @@
+# Produção na EC2 (docs/deploy-aws.md). O docker-compose.yml continua sendo o de desenvolvimento.
+#
+#   docker compose -f compose.prod.yml --env-file .env.prod up -d --build    (ou ./scripts/deploy.sh)
+#
+# Só o Caddy publica portas (80 e 443). API e banco ficam na rede interna.
+# Memória pensada para o t3.small (2 GB + 2 GB de swap do server-setup.sh): ~1,4 GB nos limites,
+# e o resto fica para o sistema e para o build do frontend.
+
+# Nome próprio: sem ele, este arquivo e o docker-compose.yml (mesma pasta) dividiriam containers
+# e volumes, e um teste local de produção mexeria no banco de desenvolvimento.
+name: algodoal-prod
+
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: deploy/caddy/Dockerfile
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?defina DOMAIN no .env.prod}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data # certificados e a conta do ACME: perder isto é pedir certificado de novo
+      - caddy_config:/config
+    networks:
+      interna:
+        # IP fixo: é o único em quem a API confia para ler o X-Forwarded-For.
+        ipv4_address: 172.28.89.10
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 128m
+    logging: *logs
+
+  api:
+    build:
+      context: ./backend
+      target: prod
+    restart: unless-stopped
+    # Só o que a API usa, explícito: o .env.prod tem coisas que não são dela (DOMAIN).
+    environment:
+      ENVIRONMENT: production
+      # Senha só com letras e números: ela vai dentro da URL (openssl rand -hex 24).
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-algodoal}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}@db:5432/${POSTGRES_DB:-algodoal}
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY no .env.prod}
+      # Front e API na mesma origem: o CORS só precisa da própria URL.
+      CORS_ORIGINS: https://${DOMAIN}
+      TRUSTED_PROXIES: 172.28.89.10
+      MEDIA_DIR: /app/media
+      LIMITE_LOGIN: ${LIMITE_LOGIN:-30/minute}
+      LIMITE_REGISTRO: ${LIMITE_REGISTRO:-20/minute}
+      API_DOCS: ${API_DOCS:-false}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      # Usados só pelo scripts/demo.sh (contas da apresentação).
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin.demo@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - fotos:/app/media
+    networks:
+      - interna
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/db', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s # as migrações rodam antes do uvicorn subir
+    mem_limit: 768m
+    logging: *logs
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-algodoal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-algodoal}
+    # Poucas conexões bastam (2 workers x pool de até 15) e cada uma custa memória.
+    command: ["postgres", "-c", "max_connections=50", "-c", "shared_buffers=128MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    shm_size: 128m
+    logging: *logs
+
+networks:
+  interna:
+    ipam:
+      config:
+        - subnet: 172.28.89.0/24
+
+volumes:
+  pgdata:
+  fotos: # fotos enviadas pelos painéis (#29): sobrevivem a rebuild e a `down`
+  caddy_data:
+  caddy_config:

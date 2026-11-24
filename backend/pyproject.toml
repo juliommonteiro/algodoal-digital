@@ -13,6 +13,7 @@ dependencies = [
   "pwdlib[argon2]>=0.2.1",
   "pyjwt>=2.10",
   "slowapi>=0.1.9",
+  "limits>=3.0",  # validação dos limites na configuração (já vem com o slowapi)
   "email-validator>=2.2",
 ]
 
